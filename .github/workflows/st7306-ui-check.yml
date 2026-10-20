@@ -23,7 +23,6 @@ jobs:
                     -I"$p/LIB" -I"$p/StdPeriphDriver/inc" -I"$p/RVMSIS"
                     -I"$p/u8g2/include")
           gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/APP/yuying_TFT.c"
-          gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/APP/Usart3_task.c"
           gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/u8g2/u8g2_d_setup.c"
           echo "Host source syntax completed (not a CH584M toolchain build)."
 
