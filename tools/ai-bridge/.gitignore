@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.local/
+*.jsonl
+*conversation*.md
+.env
+.env.*
+*.key

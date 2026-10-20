@@ -1,0 +1,37 @@
+﻿CH584 protocol tests: 2026-09-27 22:44:07
+Scope: software only; no serial connection, flashing, or hardware action.
+PASS Known homepage: 32 bytes / LEN=26 / SUM=8C
+PASS Big-endian unsigned parameters and modulo-256 checksum
+PASS HEX formatting and mixed whitespace roundtrip
+PASS Invalid and empty HEX are rejected
+PASS Homepage requires all ten fixed parameters
+PASS Current menu payloads include two page metadata values
+PASS Legacy initial-anchor page: menu6/four parameters rejected
+PASS Current menu6 uses eight page parameters plus two metadata values
+PASS Rank6 is a one-parameter transient message
+PASS Rank6 message bounds and persistent prompt clear code
+PASS Rank5 screen reinitialize is separate from ordinary pages
+PASS Read request exactly AA EE 00 01 03 03 0A
+PASS Only CMD01 and CMD03 may be transmitted
+PASS Transmit validation rejects SUM, tail, length and parameter-count damage
+PASS Page bounds: invalid rank/menu, too many parameters, bad delay
+PASS Defaults valid and cloning does not share mutable values or labels
+PASS Decoder: every possible half-packet split
+PASS Decoder: one byte at a time
+PASS Decoder: three concatenated frames
+PASS Decoder: noise and overlapping AA header recover
+PASS Decoder: bad SUM and tail cannot hide following valid frame
+PASS Decoder: impossible LEN 0/FFFF/513 rejects and resynchronizes
+PASS Decoder: 03 response and 06 report parsed without transmit permission
+PASS Decoder: Reset removes a previous partial frame
+PASS Decoder: AA EE bytes inside valid payload do not start another frame
+PASS Decoder: repeated noise followed by fragmented valid packet
+PASS XML: current format save/load preserves Unicode and values
+PASS XML: legacy initial-anchor profile imports but cannot transmit
+PASS XML: empty, malformed, empty-list and wrong root rejected
+PASS XML: duplicate Labels and mismatched label counts rejected
+PASS XML: missing/empty Labels generates names without changing protocol values
+PASS XML: duplicate/missing Values and out-of-range u16 rejected
+PASS XML: external entities are disabled
+RESULT: 33 passed, 0 failed.
+Firmware compile/flashing, actual UART receipt, screen pixels and power: not verified.

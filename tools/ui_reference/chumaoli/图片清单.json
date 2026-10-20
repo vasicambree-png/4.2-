@@ -1,0 +1,191 @@
+[
+  {
+    "name": "主页面_1通道",
+    "path": "主页面\\主页面_1通道.png",
+    "level": 1,
+    "menu": 1,
+    "variant": 0
+  },
+  {
+    "name": "主页面_2通道",
+    "path": "主页面\\主页面_2通道.png",
+    "level": 1,
+    "menu": 2,
+    "variant": 0
+  },
+  {
+    "name": "01_地址分区",
+    "path": "二级页面\\01_地址分区.png",
+    "level": 2,
+    "menu": 0,
+    "variant": 0
+  },
+  {
+    "name": "02_组网测试",
+    "path": "二级页面\\02_组网测试.png",
+    "level": 2,
+    "menu": 1,
+    "variant": 0
+  },
+  {
+    "name": "03_探头标定",
+    "path": "二级页面\\03_探头标定.png",
+    "level": 2,
+    "menu": 2,
+    "variant": 2
+  },
+  {
+    "name": "04_安装调试",
+    "path": "二级页面\\04_安装调试.png",
+    "level": 2,
+    "menu": 3,
+    "variant": 0
+  },
+  {
+    "name": "05_上传设置",
+    "path": "二级页面\\05_上传设置.png",
+    "level": 2,
+    "menu": 4,
+    "variant": 0
+  },
+  {
+    "name": "06_其它设置",
+    "path": "二级页面\\06_其它设置.png",
+    "level": 2,
+    "menu": 5,
+    "variant": 0
+  },
+  {
+    "name": "07_初锚力值",
+    "path": "二级页面\\07_初锚力值.png",
+    "level": 2,
+    "menu": 6,
+    "variant": 0
+  },
+  {
+    "name": "08_返回主页",
+    "path": "二级页面\\08_返回主页.png",
+    "level": 2,
+    "menu": 7,
+    "variant": 0
+  },
+  {
+    "name": "组网测试_结果",
+    "path": "二级分支\\组网测试_结果.png",
+    "level": 2,
+    "menu": 1,
+    "variant": 1
+  },
+  {
+    "name": "探头标定_标定值",
+    "path": "二级分支\\探头标定_标定值.png",
+    "level": 2,
+    "menu": 2,
+    "variant": 0
+  },
+  {
+    "name": "探头标定_标定成功",
+    "path": "二级分支\\探头标定_标定成功.png",
+    "level": 2,
+    "menu": 2,
+    "variant": 3
+  },
+  {
+    "name": "上传设置_中继",
+    "path": "二级分支\\上传设置_中继.png",
+    "level": 2,
+    "menu": 4,
+    "variant": 4
+  },
+  {
+    "name": "其它设置_不开机",
+    "path": "二级分支\\其它设置_不开机.png",
+    "level": 2,
+    "menu": 5,
+    "variant": 5
+  },
+  {
+    "name": "安装调试_卡尔曼0小时",
+    "path": "二级分支\\安装调试_卡尔曼0小时.png",
+    "level": 2,
+    "menu": 3,
+    "variant": 10
+  },
+  {
+    "name": "安装调试_卡尔曼2小时",
+    "path": "二级分支\\安装调试_卡尔曼2小时.png",
+    "level": 2,
+    "menu": 3,
+    "variant": 11
+  },
+  {
+    "name": "安装调试_卡尔曼4小时",
+    "path": "二级分支\\安装调试_卡尔曼4小时.png",
+    "level": 2,
+    "menu": 3,
+    "variant": 12
+  },
+  {
+    "name": "安装调试_卡尔曼8小时",
+    "path": "二级分支\\安装调试_卡尔曼8小时.png",
+    "level": 2,
+    "menu": 3,
+    "variant": 13
+  },
+  {
+    "name": "安装调试_卡尔曼12小时",
+    "path": "二级分支\\安装调试_卡尔曼12小时.png",
+    "level": 2,
+    "menu": 3,
+    "variant": 14
+  },
+  {
+    "name": "安装调试_卡尔曼24小时",
+    "path": "二级分支\\安装调试_卡尔曼24小时.png",
+    "level": 2,
+    "menu": 3,
+    "variant": 15
+  },
+  {
+    "name": "探头标定_1通道",
+    "path": "单双通道参数页\\探头标定_1通道.png",
+    "level": 2,
+    "menu": 2,
+    "variant": 3
+  },
+  {
+    "name": "安装调试_1通道",
+    "path": "单双通道参数页\\安装调试_1通道.png",
+    "level": 2,
+    "menu": 3,
+    "variant": 0
+  },
+  {
+    "name": "初锚力值_1通道",
+    "path": "单双通道参数页\\初锚力值_1通道.png",
+    "level": 2,
+    "menu": 6,
+    "variant": 1
+  },
+  {
+    "name": "探头标定_2通道",
+    "path": "单双通道参数页\\探头标定_2通道.png",
+    "level": 2,
+    "menu": 2,
+    "variant": 3
+  },
+  {
+    "name": "安装调试_2通道",
+    "path": "单双通道参数页\\安装调试_2通道.png",
+    "level": 2,
+    "menu": 3,
+    "variant": 0
+  },
+  {
+    "name": "初锚力值_2通道",
+    "path": "单双通道参数页\\初锚力值_2通道.png",
+    "level": 2,
+    "menu": 6,
+    "variant": 1
+  }
+]

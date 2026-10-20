@@ -1,0 +1,13 @@
+﻿GUI offline test: 2026-09-27T22:44:08.4378698-04:00
+PASS: form initialized; no serial port opened; no automatic hardware transmission.
+PASS: 33 default pages; home has 10 parameters.
+PASS: tab rendered: 页面与参数
+PASS: tab rendered: 收发与启动日志
+PASS: tab rendered: 通道数据 03 / 06
+PASS: all send controls disabled before connecting.
+PASS: page selection, parameter editing, u16 rejection and immutable run snapshot.
+PASS: BOOT3/BOOT10 classification and UTF8 fragmented debug receive.
+PASS: queued receive, complete response and signed angle channel display (-15/10=-1).
+PASS: channel view reset removes values from the previous connection.
+PASS: failed TX_ATTEMPT prevents transport write and locks further sends.
+PASS: failed TX_OK reports the already-submitted write and stops later sends.

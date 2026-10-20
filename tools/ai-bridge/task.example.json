@@ -1,0 +1,11 @@
+{
+  "task_id": "TASK-001",
+  "remote_url": "https://github.com/vasicambree-png/ttk.git",
+  "branch": "main",
+  "baseline_commit": "REPLACE_WITH_VERIFIED_FULL_COMMIT_SHA",
+  "request": "填写网页版 GPT 生成、由用户确认执行的详细修改要求",
+  "allowed_files": ["填写已确认的仓库相对路径"],
+  "validation": ["填写实际构建命令或人工验证要求"],
+  "acceptance": ["填写可验证的验收条件"],
+  "out_of_scope": ["无授权烧录或硬件操作", "无关改动"]
+}

@@ -1,0 +1,934 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfPageSpec xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <PageSpec>
+    <Name>首页（模拟主控状态，本地 BLE 通道数据来自固件）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>1</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>版本（10=V1.0）</string>
+      <string>电池电压（百分之一V）</string>
+      <string>主机号</string>
+      <string>发送主机号（0=中继）</string>
+      <string>分站号</string>
+      <string>状态（1开机，0关机）</string>
+      <string>LoRa信号值</string>
+      <string>首页页码 chu_num1</string>
+      <string>子页页码 chu_num2</string>
+      <string>子页选择 re_flag</string>
+    </Labels>
+    <Values>
+      <unsignedShort>10</unsignedShort>
+      <unsignedShort>370</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>地址分区 · 二级菜单</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>2</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>主机号（模拟）</string>
+      <string>分站号（模拟）</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>2</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>组网测试 · 二级菜单</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>2</Rank>
+    <Menu>1</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>次数序号（模拟）</string>
+      <string>本机地址（模拟）</string>
+      <string>测试地址（模拟）</string>
+      <string>测试次数（模拟）</string>
+      <string>成功比率%（模拟）</string>
+      <string>页面（0组网选择，1组网结果）</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>118</unsignedShort>
+      <unsignedShort>10</unsignedShort>
+      <unsignedShort>90</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>设备绑定 · 二级菜单</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>2</Rank>
+    <Menu>2</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留标定组1数值1</string>
+      <string>遗留标定组1数值2</string>
+      <string>遗留标定组2数值1</string>
+      <string>遗留标定组2数值2</string>
+      <string>遗留标定组3数值1</string>
+      <string>遗留标定组3数值2</string>
+      <string>遗留密码第1位</string>
+      <string>遗留密码第2位</string>
+      <string>遗留密码第3位</string>
+      <string>遗留密码第4位</string>
+      <string>遗留密码页标志</string>
+      <string>遗留标定组1标志</string>
+      <string>遗留标定组2标志</string>
+      <string>遗留标定组3标志</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>200</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>300</unsignedShort>
+      <unsignedShort>3000</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>2</unsignedShort>
+      <unsignedShort>3</unsignedShort>
+      <unsignedShort>4</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>安装调试 · 二级菜单</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>2</Rank>
+    <Menu>3</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留实时参数1（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数2（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数3（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数4（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数5（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数6（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数7（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数8（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数9（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数10（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数11（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数12（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数13（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数14（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数15（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数16（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数17（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数18（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数19（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数20（本页实际显示本地 BLE 数据）</string>
+      <string>遗留卡尔曼选项</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>200</unsignedShort>
+      <unsignedShort>300</unsignedShort>
+      <unsignedShort>400</unsignedShort>
+      <unsignedShort>500</unsignedShort>
+      <unsignedShort>600</unsignedShort>
+      <unsignedShort>700</unsignedShort>
+      <unsignedShort>800</unsignedShort>
+      <unsignedShort>900</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>1100</unsignedShort>
+      <unsignedShort>1200</unsignedShort>
+      <unsignedShort>1300</unsignedShort>
+      <unsignedShort>1400</unsignedShort>
+      <unsignedShort>1500</unsignedShort>
+      <unsignedShort>1600</unsignedShort>
+      <unsignedShort>1700</unsignedShort>
+      <unsignedShort>1800</unsignedShort>
+      <unsignedShort>1900</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>3</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>上传设置 · 二级菜单</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>2</Rank>
+    <Menu>4</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>原地址1（模拟）</string>
+      <string>原地址2（模拟）</string>
+      <string>原地址3（模拟）</string>
+      <string>新地址1（模拟）</string>
+      <string>新地址2（模拟）</string>
+      <string>新地址3（模拟）</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>101</unsignedShort>
+      <unsignedShort>102</unsignedShort>
+      <unsignedShort>110</unsignedShort>
+      <unsignedShort>111</unsignedShort>
+      <unsignedShort>112</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>其他设置 · 二级菜单</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>2</Rank>
+    <Menu>5</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>通信功率（模拟）</string>
+      <string>亮屏秒数（0常亮）</string>
+      <string>通信状态（1开机，0关机）</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>20</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>信息汇总 · 二级菜单</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>2</Rank>
+    <Menu>6</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留长度值1</string>
+      <string>遗留长度值2</string>
+      <string>遗留长度值3</string>
+      <string>遗留AD值1</string>
+      <string>遗留AD值2</string>
+      <string>遗留AD值3</string>
+      <string>遗留旧长度</string>
+      <string>遗留新长度</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>9012</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>3000</unsignedShort>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>组网结果（模拟统计）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>1</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>次数序号（模拟）</string>
+      <string>本机地址（模拟）</string>
+      <string>测试地址（模拟）</string>
+      <string>测试次数（模拟）</string>
+      <string>成功比率%（模拟）</string>
+      <string>页面（0组网选择，1组网结果）</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>118</unsignedShort>
+      <unsignedShort>10</unsignedShort>
+      <unsignedShort>90</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>地址分区 · 主机号焦点</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>0</Menu>
+    <Focus>1</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>主机号（模拟）</string>
+      <string>分站号（模拟）</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>2</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>设备绑定 · 绑定项焦点（不进入扫描）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>2</Menu>
+    <Focus>2</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留标定组1数值1</string>
+      <string>遗留标定组1数值2</string>
+      <string>遗留标定组2数值1</string>
+      <string>遗留标定组2数值2</string>
+      <string>遗留标定组3数值1</string>
+      <string>遗留标定组3数值2</string>
+      <string>遗留密码第1位</string>
+      <string>遗留密码第2位</string>
+      <string>遗留密码第3位</string>
+      <string>遗留密码第4位</string>
+      <string>遗留密码页标志</string>
+      <string>遗留标定组1标志</string>
+      <string>遗留标定组2标志</string>
+      <string>遗留标定组3标志</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>200</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>300</unsignedShort>
+      <unsignedShort>3000</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>2</unsignedShort>
+      <unsignedShort>3</unsignedShort>
+      <unsignedShort>4</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>设备绑定 · 已绑定列表（本地名称/MAC，只展示）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>2</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留标定组1数值1</string>
+      <string>遗留标定组1数值2</string>
+      <string>遗留标定组2数值1</string>
+      <string>遗留标定组2数值2</string>
+      <string>遗留标定组3数值1</string>
+      <string>遗留标定组3数值2</string>
+      <string>遗留密码第1位</string>
+      <string>遗留密码第2位</string>
+      <string>遗留密码第3位</string>
+      <string>遗留密码第4位</string>
+      <string>遗留密码页标志</string>
+      <string>遗留标定组1标志</string>
+      <string>遗留标定组2标志</string>
+      <string>遗留标定组3标志</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>200</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>300</unsignedShort>
+      <unsignedShort>3000</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>2</unsignedShort>
+      <unsignedShort>3</unsignedShort>
+      <unsignedShort>4</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>安装调试 · 设备信号（本地20通道）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>3</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留实时参数1（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数2（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数3（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数4（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数5（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数6（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数7（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数8（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数9（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数10（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数11（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数12（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数13（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数14（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数15（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数16（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数17（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数18（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数19（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数20（本页实际显示本地 BLE 数据）</string>
+      <string>遗留卡尔曼选项</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>200</unsignedShort>
+      <unsignedShort>300</unsignedShort>
+      <unsignedShort>400</unsignedShort>
+      <unsignedShort>500</unsignedShort>
+      <unsignedShort>600</unsignedShort>
+      <unsignedShort>700</unsignedShort>
+      <unsignedShort>800</unsignedShort>
+      <unsignedShort>900</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>1100</unsignedShort>
+      <unsignedShort>1200</unsignedShort>
+      <unsignedShort>1300</unsignedShort>
+      <unsignedShort>1400</unsignedShort>
+      <unsignedShort>1500</unsignedShort>
+      <unsignedShort>1600</unsignedShort>
+      <unsignedShort>1700</unsignedShort>
+      <unsignedShort>1800</unsignedShort>
+      <unsignedShort>1900</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>3</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>3</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>安装调试 · 设备电压（本地20通道）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>3</Menu>
+    <Focus>1</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留实时参数1（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数2（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数3（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数4（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数5（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数6（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数7（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数8（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数9（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数10（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数11（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数12（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数13（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数14（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数15（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数16（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数17（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数18（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数19（本页实际显示本地 BLE 数据）</string>
+      <string>遗留实时参数20（本页实际显示本地 BLE 数据）</string>
+      <string>遗留卡尔曼选项</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>200</unsignedShort>
+      <unsignedShort>300</unsignedShort>
+      <unsignedShort>400</unsignedShort>
+      <unsignedShort>500</unsignedShort>
+      <unsignedShort>600</unsignedShort>
+      <unsignedShort>700</unsignedShort>
+      <unsignedShort>800</unsignedShort>
+      <unsignedShort>900</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>1100</unsignedShort>
+      <unsignedShort>1200</unsignedShort>
+      <unsignedShort>1300</unsignedShort>
+      <unsignedShort>1400</unsignedShort>
+      <unsignedShort>1500</unsignedShort>
+      <unsignedShort>1600</unsignedShort>
+      <unsignedShort>1700</unsignedShort>
+      <unsignedShort>1800</unsignedShort>
+      <unsignedShort>1900</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>3</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>4</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>信息汇总 · 设备名称（本地20通道）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>6</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留长度值1</string>
+      <string>遗留长度值2</string>
+      <string>遗留长度值3</string>
+      <string>遗留AD值1</string>
+      <string>遗留AD值2</string>
+      <string>遗留AD值3</string>
+      <string>遗留旧长度</string>
+      <string>遗留新长度</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>9012</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>3000</unsignedShort>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>5</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>信息汇总 · 名称警报焦点（本地计数）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>6</Menu>
+    <Focus>1</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留长度值1</string>
+      <string>遗留长度值2</string>
+      <string>遗留长度值3</string>
+      <string>遗留AD值1</string>
+      <string>遗留AD值2</string>
+      <string>遗留AD值3</string>
+      <string>遗留旧长度</string>
+      <string>遗留新长度</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>9012</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>3000</unsignedShort>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>信息汇总 · 电压警报焦点（本地计数）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>6</Menu>
+    <Focus>2</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留长度值1</string>
+      <string>遗留长度值2</string>
+      <string>遗留长度值3</string>
+      <string>遗留AD值1</string>
+      <string>遗留AD值2</string>
+      <string>遗留AD值3</string>
+      <string>遗留旧长度</string>
+      <string>遗留新长度</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>9012</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>3000</unsignedShort>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>上传设置 · 新地址焦点（模拟）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>4</Menu>
+    <Focus>1</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>原地址1（模拟）</string>
+      <string>原地址2（模拟）</string>
+      <string>原地址3（模拟）</string>
+      <string>新地址1（模拟）</string>
+      <string>新地址2（模拟）</string>
+      <string>新地址3（模拟）</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>101</unsignedShort>
+      <unsignedShort>102</unsignedShort>
+      <unsignedShort>110</unsignedShort>
+      <unsignedShort>111</unsignedShort>
+      <unsignedShort>112</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>其他设置 · 开关状态焦点（模拟）</Name>
+    <Enabled>true</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>5</Menu>
+    <Focus>5</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>通信功率（模拟）</string>
+      <string>亮屏秒数（0常亮）</string>
+      <string>通信状态（1开机，0关机）</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>20</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>绑定扫描子页（改变扫描模式，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>2</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留标定组1数值1</string>
+      <string>遗留标定组1数值2</string>
+      <string>遗留标定组2数值1</string>
+      <string>遗留标定组2数值2</string>
+      <string>遗留标定组3数值1</string>
+      <string>遗留标定组3数值2</string>
+      <string>遗留密码第1位</string>
+      <string>遗留密码第2位</string>
+      <string>遗留密码第3位</string>
+      <string>遗留密码第4位</string>
+      <string>遗留密码页标志</string>
+      <string>遗留标定组1标志</string>
+      <string>遗留标定组2标志</string>
+      <string>遗留标定组3标志</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>100</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>200</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>300</unsignedShort>
+      <unsignedShort>3000</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>2</unsignedShort>
+      <unsignedShort>3</unsignedShort>
+      <unsignedShort>4</unsignedShort>
+      <unsignedShort>0</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>2</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>恢复出厂确认页（仅显示，不执行，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>3</Rank>
+    <Menu>6</Menu>
+    <Focus>1</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>遗留长度值1</string>
+      <string>遗留长度值2</string>
+      <string>遗留长度值3</string>
+      <string>遗留AD值1</string>
+      <string>遗留AD值2</string>
+      <string>遗留AD值3</string>
+      <string>遗留旧长度</string>
+      <string>遗留新长度</string>
+      <string>子页页码 chu_num2（1/2）</string>
+      <string>子页选择 re_flag（0菜单，1解绑列表，2绑定扫描，3信号，4电压，5名称，6恢复确认）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>9012</unsignedShort>
+      <unsignedShort>1000</unsignedShort>
+      <unsignedShort>2000</unsignedShort>
+      <unsignedShort>3000</unsignedShort>
+      <unsignedShort>1234</unsignedShort>
+      <unsignedShort>5678</unsignedShort>
+      <unsignedShort>1</unsignedShort>
+      <unsignedShort>6</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 清除提示（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>0</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 参数保存成功（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>1</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 参数保存失败（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>2</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 绑定保存成功（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>3</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 绑定保存失败（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>4</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 无绑定可保存（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>5</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 绑定已清除（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>6</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 绑定清除失败（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>7</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 长按K1+K3开机（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>8</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>提示 · 正在关机中（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>6</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels>
+      <string>提示码 msg（0清除；1～7短时；8/9常驻）</string>
+    </Labels>
+    <Values>
+      <unsignedShort>9</unsignedShort>
+    </Values>
+  </PageSpec>
+  <PageSpec>
+    <Name>显示重新初始化（会清空，随后发送首页）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>0</Sensor>
+    <Rank>5</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels />
+    <Values />
+  </PageSpec>
+  <PageSpec>
+    <Name>旧等级4重启保存提示（仅显示，仅手动）</Name>
+    <Enabled>false</Enabled>
+    <Sensor>1</Sensor>
+    <Rank>4</Rank>
+    <Menu>0</Menu>
+    <Focus>0</Focus>
+    <Delay>1500</Delay>
+    <Labels />
+    <Values />
+  </PageSpec>
+</ArrayOfPageSpec>
