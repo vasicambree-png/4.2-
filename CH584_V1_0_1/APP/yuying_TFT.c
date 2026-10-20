@@ -5,6 +5,7 @@
 //#include "u8g2_fonts.c"
 #include "u8g2.h"
 #include "stdlib.h"
+#include <stdio.h>
 /* ★ 功能清单：主页面/子页要显示 CH584M 本地数据（CH_com_buf[]、绑定表、
  *   异常计数、扫描名称缓存），这些类型与 extern 声明都在 observer.h 里。
  *   observer.h 自身 include yuying_TFT.h（有 include guard），无循环问题。 */
