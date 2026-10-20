@@ -38,7 +38,7 @@ jobs:
           ui=(root/"APP/yuying_TFT.c").read_text()
           glyphs=(root/"APP/include/ui_menu_assets.h").read_text()
           assert '#include "ui_st7306_42_layout.inc"' in ui
-          assert 'ui42_draw_scene(list);' in ui
+          assert 'ui42_draw_scene(&Data_list1);' in ui
           assert "#define UI42_W           400u" in layout
           assert "#define UI42_H           600u" in layout
           assert "ui42_main(list);" in layout
