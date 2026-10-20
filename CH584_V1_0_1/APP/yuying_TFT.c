@@ -13,6 +13,11 @@
 #include "ui_menu_assets.h"
 #include "ui_wireless_assets.h"
 extern u8g2_t u8g2;
+
+#if SCREEN_PANEL_ST7306_42
+/* Implemented after all shared UI helpers; 2.9-inch layout untouched. */
+static void ui42_draw_scene(data_LIST *list);
+#endif
 data_LIST Data_list1;
 
 const uint8_t bmp[]={
@@ -240,8 +245,38 @@ static uint16_t ui_text_draw(uint16_t x, uint16_t baseline, const char *text, ui
         }
         if (glyph != NULL)
         {
+#if SCREEN_PANEL_ST7306_42
+            /* ST7306 2-bit pixel encoder consumes two vertical U8g2 bits
+             * per physical screen pixel after R3 rotation. Copy each glyph
+             * bitmap scanline twice so Chinese text keeps its 2.9-inch
+             * physical height and does not become 50% tall.
+             * Only a bounded local buffer is used; no additional BSS. */
+            {
+                uint8_t doubled[160];
+                uint16_t stride = (uint16_t)((glyph->width + 7u) / 8u);
+                uint16_t rows = (uint16_t)(size + 2u);
+                uint16_t bytes = (uint16_t)(stride * rows * 2u);
+                if (bytes <= sizeof(doubled))
+                {
+                    uint16_t row, col;
+                    for (row = 0u; row < rows; row++)
+                        for (col = 0u; col < stride; col++)
+                        {
+                            uint8_t b = u8x8_pgm_read(glyph->bits + row * stride + col);
+                            doubled[(2u * row) * stride + col] = b;
+                            doubled[(2u * row + 1u) * stride + col] = b;
+                        }
+                    ui_fast_DrawXBMP(&u8g2, x, (uint16_t)(baseline - size * 2u + 2u),
+                                     glyph->width, (uint16_t)(rows * 2u), doubled);
+                }
+                else
+                    ui_fast_DrawXBMP(&u8g2, x, (uint16_t)(baseline - size + 1u),
+                                     glyph->width, rows, glyph->bits);
+            }
+#else
             ui_fast_DrawXBMP(&u8g2, x, (uint16_t)(baseline - size + 1u),
                           glyph->width, (uint16_t)(size + 2u), glyph->bits);
+#endif
             x = (uint16_t)(x + glyph->width);
         }
     }
@@ -462,6 +497,18 @@ void UI_Control(data_LIST *list)
 
     /* Control commands/no page must preserve panel RAM, never send blank. */
     if (g_ui_msg == UI_MSG_NONE && (rank < 1u || rank > 4u)) return;
+#if SCREEN_PANEL_ST7306_42
+    /* Physical 400x300 ST7306 uses a 400x600 virtual drawing plane.
+     * Keep the STM32 protocol/navigation state and render new coordinates. */
+    u8g2_ClearBuffer(&u8g2);
+    ui42_draw_scene(list);
+#if UI_LATENCY_DIAG
+    ui_send_buffer_profiled(render_start);
+#else
+    u8g2_SendBuffer(&u8g2);
+#endif
+    return;
+#endif
     u8g2_ClearBuffer(&u8g2);
 
     /* ★★ 保存结果提示页优先：只要 g_ui_msg 非 0，就画提示页**并直接返回**。
@@ -1779,9 +1826,8 @@ void return_main_Control(void)
 
 
 
-
-
-
+/* Full ST7306 screen layout: no changes to legacy 2.9-inch page handlers. */
+#include "ui_st7306_42_layout.inc"
 
 void u8g2Init(u8g2_t *u8g2)
 {
