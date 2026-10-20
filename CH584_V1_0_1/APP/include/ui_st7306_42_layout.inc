@@ -78,6 +78,12 @@ static void ui42_menu_row(uint8_t id, const char *label)
                 ui42_selected(id), 0u, 16u);
 }
 
+static void ui42_menu_return(uint8_t index)
+{
+    ui42_button(UI42_RIGHT_X, 511u, UI42_RIGHT_W, 62u, "返回",
+                ui42_selected(index), 1u, 16u);
+}
+
 static void ui42_menu_buttons(const char *left, uint8_t li,
                               const char *right, uint8_t ri)
 {
@@ -107,7 +113,7 @@ static void ui42_main(const data_LIST *p)
     /* Retain the original brand bitmap; live values never enter assets. */
     ui_fast_DrawXBMP(&u8g2, 13u, 15u, UI_HOME_BRAND_WIDTH,
                      UI_HOME_BRAND_HEIGHT, ui_home_brand);
-    ui42_text(125u, 47u, "正在通讯中", 18u);
+    ui42_text(125u, 47u, "正在通信中", 18u);
     page = (p->UI_main.chu_num1 == 2u) ? 2u : 1u;
 
     u8g2_DrawHLine(&u8g2, 10u, 75u, 380u);
@@ -124,7 +130,7 @@ static void ui42_main(const data_LIST *p)
         else if (p->UI_main.send_host_num == 121u) strcpy(buf, "无");
         else if (p->UI_main.send_host_num == 0u) strcpy(buf, "中继");
         else sprintf(buf, "%u", (unsigned int)p->UI_main.send_host_num);
-        ui42_text(14u, 153u, "正在通讯中", 14u);
+        ui42_text(14u, 153u, "正在通信中", 14u);
         ui42_text(199u, 153u, buf, 14u);
         sprintf(buf, "信号:%u", (unsigned int)p->UI_main.Lora_rssi);
         ui42_text_right(384u, 153u, buf, 14u);
@@ -325,12 +331,12 @@ static void ui42_detail(void)
         ui42_menu_row(0u, a);
         ui42_menu_row(1u, "一键解绑");
         ui42_menu_row(2u, "绑定设备");
-        ui42_menu_buttons("返回", 3u, "设备绑定", 2u);
+        ui42_menu_return(3u);
         break;
     case 3u:
         ui42_menu_row(0u, "设备信号");
         ui42_menu_row(1u, "设备电压");
-        ui42_menu_buttons("返回", 2u, "安装调试", 0u);
+        ui42_menu_return(2u);
         break;
     case 4u:
         ui42_text(172u, 129u, "已存地址", 14u);
@@ -378,7 +384,7 @@ static void ui42_detail(void)
         sprintf(a, "蓝牙电压异常警报:%u", (unsigned int)g_volt_err_count);
         ui42_menu_row(2u, a);
         ui42_menu_row(3u, "恢复出厂");
-        ui42_menu_buttons("返回", 4u, "信息汇总", 0u);
+        ui42_menu_return(4u);
         break;
     case 7u:
         ui42_text(156u, 246u, "返回主页", 18u);
