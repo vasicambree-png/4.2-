@@ -10,6 +10,15 @@
 #define SCREEN_PANEL_ST7306_42 1
 #endif
 
+/* 4.2-inch optional page-buffer renderer: 75 x 5 x 8 = 3000 B.
+ * Keep original full-screen renderer available when set to 0.
+ * IMPORTANT: this reduces RAM but repeats draw calls for every page.
+ * No hardware validation has been performed yet. */
+#ifndef SCREEN_ST7306_PAGE_BUFFER
+#define SCREEN_ST7306_PAGE_BUFFER 1
+#endif
+
+
 /* ST7306 packs two horizontal virtual bits into each physical pixel.
  * With U8G2_R3 its framebuffer coordinates are 400 x 600, while the
  * real screen is 400 x 300 in landscape orientation. */

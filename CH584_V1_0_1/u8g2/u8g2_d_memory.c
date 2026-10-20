@@ -117,3 +117,18 @@ uint8_t *u8g2_m_38_50_f(uint8_t *page_cnt)
     return buf;
 #endif
 }
+
+/* Five virtual tile rows, one tenth of the ST7306 50-row framebuffer.
+ * With 75 tiles per row, this occupies 75*5*8 = 3000 bytes instead of
+ * 75*50*8 = 30000 bytes. U8g2 FirstPage/NextPage redraws each page. */
+uint8_t *u8g2_m_75_50_p5(uint8_t *page_cnt)
+{
+#ifdef U8G2_USE_DYNAMIC_ALLOC
+    *page_cnt = 5u;
+    return 0;
+#else
+    static uint8_t buf[75u * 5u * 8u];
+    *page_cnt = 5u;
+    return buf;
+#endif
+}

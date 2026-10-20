@@ -449,64 +449,68 @@ static void ui_send_buffer_profiled(uint32_t render_start)
 }
 #endif
 
-__HIGH_CODE
-void UI_Control(data_LIST *list)
+/* Draw a single clip page; this routine must be free of per-frame side effects.
+ * The ST7306 low-RAM mode calls it once for each of the ten 5-tile-row
+ * regions. Frame-dependent state is captured before the picture loop. */
+static void UI_DrawCurrentScene(uint8_t active_rank, uint8_t active_rank2_addr)
 {
-    uint8_t rank2_addr=0,rank3_addr=0;
-#if UI_LATENCY_DIAG
-    uint32_t render_start = TMOS_GetSystemClock();
-#endif
-    rank=list->menu_rank;
-    rank2_addr=list->rank2_addr;
-    rank3_addr=list->rank3_addr;
-
-    /* Control commands/no page must preserve panel RAM, never send blank. */
-    if (g_ui_msg == UI_MSG_NONE && (rank < 1u || rank > 4u)) return;
-    u8g2_ClearBuffer(&u8g2);
-
-    /* ★★ 保存结果提示页优先：只要 g_ui_msg 非 0，就画提示页**并直接返回**。
-       这样 STM32 随后发来的普通页面帧（0x01 menu_rank 1/2/3）不会把提示盖掉；
-       普通页面的字段仍然照常写进 Data_list1，提示消失后画回的就是最新页面。 */
     if (g_ui_msg != UI_MSG_NONE)
     {
         UI_Message_Display();
-#if UI_LATENCY_DIAG
-        ui_send_buffer_profiled(render_start);
-#else
-        u8g2_SendBuffer(&u8g2);
-#endif
         return;
     }
+    switch (active_rank)
+    {
+        case 1:
+            UI_Main_Display(&Data_list1);
+            break;
+        case 2:
+        case 3:
+            UI_Select = active_rank2_addr;
+            UI_Menu_Display();
+            break;
+        case 4:
+            new_return();
+            break;
+        default:
+            break;
+    }
+}
 
-   switch (rank)
-   {
-       case 1:
-           UI_Main_Display(&Data_list1);
-           break;
-       case 2:
-       case 3:
-           UI_Select=rank2_addr;
-           UI_Menu_Display();
-           break;
-       case 4:
-           new_return();
-           break;
-       case 5:
-//           PRINT("rank == %d ;u8g2Init(&u8g2)\r\n",rank);
-//           u8g2Init(&u8g2);
-//           rank=0;
-//
-//            app_drv_fifo_init(&app_uart_rx_fifo, app_uart_rx_buffer, 512);
-//            Usart3_Init();
-           break;
-       default:
-
-           break;
-   }
+__HIGH_CODE
+void UI_Control(data_LIST *list)
+{
+    uint8_t active_rank = list->menu_rank;
+    uint8_t active_rank2_addr = list->rank2_addr;
 #if UI_LATENCY_DIAG
-   ui_send_buffer_profiled(render_start);
+    uint32_t render_start = TMOS_GetSystemClock();
+#endif
+
+    /* Preserve panel RAM when there is no valid page or active message. */
+    if (g_ui_msg == UI_MSG_NONE &&
+        (active_rank < 1u || active_rank > 4u)) return;
+
+#if SCREEN_PANEL_ST7306_42 && SCREEN_ST7306_PAGE_BUFFER
+    /* U8g2 picture loop: each page is cleared, drawn, sent and advanced.
+     * Never call SendBuffer() only once with a partial framebuffer. */
+    u8g2_FirstPage(&u8g2);
+    do
+    {
+        UI_DrawCurrentScene(active_rank, active_rank2_addr);
+    } while (u8g2_NextPage(&u8g2));
+#if UI_LATENCY_DIAG
+    /* Here render and SPI transfers are interleaved; combined duration. */
+    ui_profile_render_ticks = (uint32_t)(TMOS_GetSystemClock() - render_start);
+    ui_profile_transfer_ticks = 0u;
+#endif
 #else
-   u8g2_SendBuffer(&u8g2);
+    u8g2_ClearBuffer(&u8g2);
+    UI_DrawCurrentScene(active_rank, active_rank2_addr);
+#if UI_LATENCY_DIAG
+    ui_send_buffer_profiled(render_start);
+#else
+    u8g2_SendBuffer(&u8g2);
+#endif
 #endif
 }
 /* ==================================================================
@@ -1788,8 +1792,13 @@ void u8g2Init(u8g2_t *u8g2)
     TFT_IO_init();
 
 #if SCREEN_PANEL_ST7306_42
+#if SCREEN_ST7306_PAGE_BUFFER
+    u8g2_Setup_st7306_300x400_p5(u8g2, U8G2_R3,
+                                  u8x8_byte_CH584M_spi, u8x8_CH584M_gpio_and_delay);
+#else
     u8g2_Setup_st7306_300x400_f(u8g2, U8G2_R3,
                                  u8x8_byte_CH584M_spi, u8x8_CH584M_gpio_and_delay);
+#endif
 #else
     u8g2_Setup_st7305_yuying_168x384_f(u8g2, U8G2_R3,
                                         u8x8_byte_CH584M_spi, u8x8_CH584M_gpio_and_delay);
@@ -1808,15 +1817,27 @@ void UI_TestArtwork(u8g2_t *u8g2)
 #if SCREEN_PANEL_ST7306_42
     /* Do NOT transmit the ST7305 native boot bitmap to an ST7306 panel.
      * This first-power-on geometry test also works without the baseboard. */
+#if SCREEN_ST7306_PAGE_BUFFER
+    u8g2_FirstPage(u8g2);
+    do
+    {
+#else
     u8g2_ClearBuffer(u8g2);
-    u8g2_SetDrawColor(u8g2, 1u);
-    u8g2_DrawFrame(u8g2, 0u, 0u, SCREEN_WIDTH, SCREEN_HEIGHT);
-    u8g2_DrawFrame(u8g2, 6u, 6u, SCREEN_WIDTH - 12u, SCREEN_HEIGHT - 12u);
-    u8g2_DrawHLine(u8g2, 0u, SCREEN_HEIGHT / 2u, SCREEN_WIDTH);
-    u8g2_DrawVLine(u8g2, SCREEN_WIDTH / 2u, 0u, SCREEN_HEIGHT);
-    u8g2_DrawBox(u8g2, 24u, 24u, 48u, 48u);
-    u8g2_DrawBox(u8g2, SCREEN_WIDTH - 72u, SCREEN_HEIGHT - 72u, 48u, 48u);
+    {
+#endif
+        u8g2_SetDrawColor(u8g2, 1u);
+        u8g2_DrawFrame(u8g2, 0u, 0u, SCREEN_WIDTH, SCREEN_HEIGHT);
+        u8g2_DrawFrame(u8g2, 6u, 6u, SCREEN_WIDTH - 12u, SCREEN_HEIGHT - 12u);
+        u8g2_DrawHLine(u8g2, 0u, SCREEN_HEIGHT / 2u, SCREEN_WIDTH);
+        u8g2_DrawVLine(u8g2, SCREEN_WIDTH / 2u, 0u, SCREEN_HEIGHT);
+        u8g2_DrawBox(u8g2, 24u, 24u, 48u, 48u);
+        u8g2_DrawBox(u8g2, SCREEN_WIDTH - 72u, SCREEN_HEIGHT - 72u, 48u, 48u);
+#if SCREEN_ST7306_PAGE_BUFFER
+    } while (u8g2_NextPage(u8g2));
+#else
+    }
     u8g2_SendBuffer(u8g2);
+#endif
 #else
     u8x8_st7305_yuying_send_boot(u8g2_GetU8x8(u8g2));
 #endif

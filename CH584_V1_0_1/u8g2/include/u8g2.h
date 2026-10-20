@@ -682,11 +682,14 @@ uint8_t *u8g2_m_48_30_1(uint8_t *page_cnt);
 uint8_t *u8g2_m_48_30_2(uint8_t *page_cnt);
 uint8_t *u8g2_m_48_30_f(uint8_t *page_cnt);
 uint8_t *u8g2_m_38_50_f(uint8_t *page_cnt);
+uint8_t *u8g2_m_75_50_p5(uint8_t *page_cnt);
 /* u8g2_d_memory.c generated code end */
 
 /*==========================================*/
 void u8g2_Setup_st7306_300x400_f(u8g2_t *u8g2, const u8g2_cb_t *rotation,
                                  u8x8_msg_cb byte_cb, u8x8_msg_cb gpio_and_delay_cb);
+void u8g2_Setup_st7306_300x400_p5(u8g2_t *u8g2, const u8g2_cb_t *rotation,
+                                  u8x8_msg_cb byte_cb, u8x8_msg_cb gpio_and_delay_cb);
 /* u8g2_d_setup.c generated code start */
 void u8g2_Setup_ssd1305_128x32_noname_1(u8g2_t *u8g2, const u8g2_cb_t *rotation, u8x8_msg_cb byte_cb, u8x8_msg_cb gpio_and_delay_cb);
 void u8g2_Setup_ssd1305_128x32_adafruit_1(u8g2_t *u8g2, const u8g2_cb_t *rotation, u8x8_msg_cb byte_cb, u8x8_msg_cb gpio_and_delay_cb);
@@ -4075,7 +4078,7 @@ extern const uint8_t u8g2_font_px437wyse700b_mf[] U8G2_FONT_SECTION("u8g2_font_p
 extern const uint8_t u8g2_font_px437wyse700b_mr[] U8G2_FONT_SECTION("u8g2_font_px437wyse700b_mr");
 extern const uint8_t u8g2_font_px437wyse700b_mn[] U8G2_FONT_SECTION("u8g2_font_px437wyse700b_mn");
 
-//×Ô¶¨Òå
+//Ã—Ã”Â¶Â¨Ã’Ã¥
 extern const uint8_t u8g2_font16_lunar[5407] U8G2_FONT_SECTION("u8g2_font16_lunar")    ;
 extern const uint8_t u8g2_font24_lunar[8846] U8G2_FONT_SECTION("u8g2_font24_lunar")    ;
 extern const uint8_t u8g2_font32_lunar[12329] U8G2_FONT_SECTION("u8g2_font32_lunar")   ;
