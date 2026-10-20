@@ -5,6 +5,7 @@
 //#include "u8g2_fonts.c"
 #include "u8g2.h"
 #include "stdlib.h"
+#include <stdio.h>
 /* ★ 功能清单：主页面/子页要显示 CH584M 本地数据（CH_com_buf[]、绑定表、
  *   异常计数、扫描名称缓存），这些类型与 extern 声明都在 observer.h 里。
  *   observer.h 自身 include yuying_TFT.h（有 include guard），无循环问题。 */
@@ -13,6 +14,9 @@
 #include "ui_menu_assets.h"
 #include "ui_wireless_assets.h"
 extern u8g2_t u8g2;
+#if SCREEN_PANEL_ST7306_42
+static void ui42_draw_scene(data_LIST *list);
+#endif
 data_LIST Data_list1;
 
 const uint8_t bmp[]={
@@ -240,8 +244,35 @@ static uint16_t ui_text_draw(uint16_t x, uint16_t baseline, const char *text, ui
         }
         if (glyph != NULL)
         {
+#if SCREEN_PANEL_ST7306_42
+            /* Each physical vertical ST7306 pixel encodes two virtual bits.
+             * Repeat each bitmap glyph row twice, maintaining legibility. */
+            {
+                uint8_t doubled[160];
+                uint16_t stride = (uint16_t)((glyph->width + 7u) / 8u);
+                uint16_t rows = (uint16_t)(size + 2u);
+                uint16_t bytes = (uint16_t)(stride * rows * 2u);
+                if (bytes <= sizeof(doubled))
+                {
+                    uint16_t row, col;
+                    for (row = 0u; row < rows; row++)
+                        for (col = 0u; col < stride; col++)
+                        {
+                            uint8_t b = u8x8_pgm_read(glyph->bits + row * stride + col);
+                            doubled[(2u * row) * stride + col] = b;
+                            doubled[(2u * row + 1u) * stride + col] = b;
+                        }
+                    ui_fast_DrawXBMP(&u8g2, x, (uint16_t)(baseline - size * 2u + 2u),
+                                     glyph->width, (uint16_t)(rows * 2u), doubled);
+                }
+                else
+                    ui_fast_DrawXBMP(&u8g2, x, (uint16_t)(baseline - size + 1u),
+                                     glyph->width, rows, glyph->bits);
+            }
+#else
             ui_fast_DrawXBMP(&u8g2, x, (uint16_t)(baseline - size + 1u),
                           glyph->width, (uint16_t)(size + 2u), glyph->bits);
+#endif
             x = (uint16_t)(x + glyph->width);
         }
     }
@@ -454,6 +485,14 @@ static void ui_send_buffer_profiled(uint32_t render_start)
  * regions. Frame-dependent state is captured before the picture loop. */
 static void UI_DrawCurrentScene(uint8_t active_rank, uint8_t active_rank2_addr)
 {
+#if SCREEN_PANEL_ST7306_42
+    /* Render the full logical scene for the currently clipped 5-tile page.
+     * U8g2 hardware sender advances tile rows after this function returns. */
+    (void)active_rank;
+    (void)active_rank2_addr;
+    ui42_draw_scene(&Data_list1);
+    return;
+#endif
     if (g_ui_msg != UI_MSG_NONE)
     {
         UI_Message_Display();
@@ -1783,9 +1822,8 @@ void return_main_Control(void)
 
 
 
-
-
-
+/* ST7306 4.2-inch visual layout shared with the full-buffer build. */
+#include "ui_st7306_42_layout.inc"
 
 void u8g2Init(u8g2_t *u8g2)
 {
