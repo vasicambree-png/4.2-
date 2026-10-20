@@ -35,3 +35,41 @@ jobs:
           gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/u8g2/u8g2_d_memory.c"
           gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/u8g2/u8g2_d_setup.c"
           gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/APP/yuying_TFT.c"
+
+      - name: Compare page and full framebuffer BSS with GCC section GC
+        shell: bash
+        run: |
+          set -euo pipefail
+          p=CH584_V1_0_1
+          gcc -std=gnu99 -O0 -ffunction-sections -fdata-sections \
+              -I"$p/u8g2/include" -c "$p/u8g2/u8g2_d_memory.c" -o /tmp/st7306_memory.o
+          cat > /tmp/st7306_ram_probe.c <<'EOF'
+          #include <stdint.h>
+          extern uint8_t *u8g2_m_75_50_p5(uint8_t *);
+          extern uint8_t *u8g2_m_38_50_f(uint8_t *);
+          int main(void)
+          {
+              uint8_t rows = 0;
+          #if PAGE_BUFFER
+              volatile uint8_t *buffer = u8g2_m_75_50_p5(&rows);
+              buffer[0] = 1;
+              return rows != 5;
+          #else
+              volatile uint8_t *buffer = u8g2_m_38_50_f(&rows);
+              buffer[0] = 1;
+              return rows != 50;
+          #endif
+          }
+          EOF
+          gcc -std=gnu99 -O0 -DPAGE_BUFFER=1 -ffunction-sections -fdata-sections \
+              -Wl,--gc-sections /tmp/st7306_ram_probe.c /tmp/st7306_memory.o -o /tmp/page_framebuffer
+          gcc -std=gnu99 -O0 -DPAGE_BUFFER=0 -ffunction-sections -fdata-sections \
+              -Wl,--gc-sections /tmp/st7306_ram_probe.c /tmp/st7306_memory.o -o /tmp/full_framebuffer
+          /tmp/page_framebuffer
+          /tmp/full_framebuffer
+          size /tmp/page_framebuffer /tmp/full_framebuffer
+          page_bss=$(size -B /tmp/page_framebuffer | awk 'NR==2{print $3}')
+          full_bss=$(size -B /tmp/full_framebuffer | awk 'NR==2{print $3}')
+          diff=$((full_bss-page_bss))
+          echo "Full minus page linked BSS = ${diff} bytes"
+          test "$diff" -eq 27000
