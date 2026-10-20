@@ -144,10 +144,24 @@ void u8g2_Setup_st7306_300x400_f(u8g2_t *u8g2, const u8g2_cb_t *rotation,
     uint8_t tile_buf_height;
     uint8_t *buf;
 
-    // Ê¹ÓÃĞÂµÄÏÔÊ¾Çı¶¯ u8x8_d_st7306_300x400£¨Ğè×ÔĞĞÊµÏÖ£©
+    // ä½¿ç”¨æ–°çš„æ˜¾ç¤ºé©±åŠ¨ u8x8_d_st7306_300x400ï¼ˆéœ€è‡ªè¡Œå®ç°ï¼‰
     u8g2_SetupDisplay(u8g2, u8x8_d_st7306_300x400, u8x8_cad_011, byte_cb, gpio_and_delay_cb);
 
-    // ·ÖÅäÈ«ÆÁ»º³åÇø
+    // åˆ†é…å…¨å±ç¼“å†²åŒº
     buf = u8g2_m_38_50_f(&tile_buf_height);
     u8g2_SetupBuffer(u8g2, buf, tile_buf_height, u8g2_ll_hvline_vertical_top_lsb, rotation);
+}
+
+/* ST7306 300x400 physical / 600x400 virtual, five-tile-row page buffer.
+ * U8G2_R3 maps these coordinates into 400x600 UI coordinates. */
+void u8g2_Setup_st7306_300x400_p5(u8g2_t *u8g2, const u8g2_cb_t *rotation,
+                                  u8x8_msg_cb byte_cb, u8x8_msg_cb gpio_and_delay_cb)
+{
+    uint8_t tile_buf_height;
+    uint8_t *buf;
+    u8g2_SetupDisplay(u8g2, u8x8_d_st7306_300x400,
+                      u8x8_cad_011, byte_cb, gpio_and_delay_cb);
+    buf = u8g2_m_75_50_p5(&tile_buf_height);
+    u8g2_SetupBuffer(u8g2, buf, tile_buf_height,
+                     u8g2_ll_hvline_vertical_top_lsb, rotation);
 }

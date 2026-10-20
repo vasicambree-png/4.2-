@@ -1,0 +1,63 @@
+name: Validate ST7306 4.2-inch UI
+
+on:
+  push:
+    branches: [feat/st7306-42-ui-lowram]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-ui-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Host GCC syntax checks for actual firmware C files
+        shell: bash
+        run: |
+          set -euo pipefail
+          p=CH584_V1_0_1
+          includes=(-I"$p/APP" -I"$p/APP/include" -I"$p/HAL" -I"$p/HAL/include"
+                    -I"$p/LIB" -I"$p/StdPeriphDriver/inc" -I"$p/RVMSIS"
+                    -I"$p/u8g2/include")
+          gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/APP/yuying_TFT.c"
+          gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/u8g2/u8g2_d_setup.c"
+          echo "Host source syntax completed (not a CH584M toolchain build)."
+
+      - name: Check ST7306 page coverage and menu focus mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path("CH584_V1_0_1")
+          layout=(root/"APP/include/ui_st7306_42_layout.inc").read_text()
+          ui=(root/"APP/yuying_TFT.c").read_text()
+          glyphs=(root/"APP/include/ui_menu_assets.h").read_text()
+          assert '#include "ui_st7306_42_layout.inc"' in ui
+          assert 'ui42_draw_scene(&Data_list1);' in ui
+          assert "#define UI42_W           400u" in layout
+          assert "#define UI42_H           600u" in layout
+          assert "ui42_main(list);" in layout
+          assert "#define SCREEN_ST7306_PAGE_BUFFER 1" in (root/"APP/include/yuying_TFT.h").read_text()
+          assert "u8g2_FirstPage(&u8g2);" in ui and "u8g2_NextPage(&u8g2)" in ui
+          assert "ui42_nav();" in layout
+          assert "ui42_detail();" in layout
+          assert "for (ch = 0u; ch < MAX_CH_NUM; ch++)" in layout
+          assert "for (i = 0u; i < 10u; i++)" in layout
+          assert "case 7u:" in layout
+          assert "re == 1u || re == 2u" in layout
+          assert "re == 3u || re == 4u" in layout
+          assert "re == 5u" in layout and "re == 6u" in layout
+          quotes=re.findall(r'"([^"\n]*)"',layout)
+          candidates=set("".join(quotes))
+          for size in (11,14,16,18):
+              t=glyphs.split(f"ui_menu_glyphs_{size}[]",1)[1].split("};",1)[0]
+              codes={int(x,16) for x in re.findall(r"\{0x([0-9a-fA-F]{4,6}),",t)}
+              missing=sorted({c for c in candidates if '\u4e00' <= c <= '\u9fff' and ord(c) not in codes})
+              assert not missing, f"{size}px glyph missing: {missing}"
+          print("Home two pages, eight menu routes, detail types and glyph coverage checked.")
+          PY
