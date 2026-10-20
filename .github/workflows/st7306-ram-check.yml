@@ -1,0 +1,37 @@
+name: ST7306 low-RAM source checks
+
+on:
+  push:
+    branches:
+      - opt/st7306-page-buffer-ram
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify expected 3KB page profile is selected
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '#define SCREEN_ST7306_PAGE_BUFFER 1' CH584_V1_0_1/APP/include/yuying_TFT.h
+          grep -q 'static uint8_t buf\[75u \* 5u \* 8u\]' CH584_V1_0_1/u8g2/u8g2_d_memory.c
+          grep -q 'u8g2_FirstPage(&u8g2)' CH584_V1_0_1/APP/yuying_TFT.c
+          grep -q 'u8g2_NextPage(&u8g2)' CH584_V1_0_1/APP/yuying_TFT.c
+          echo "Screen framebuffer profile: 75*5*8=3000 bytes vs 30000-byte full buffer."
+      - name: Compile-time syntax check of changed modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          p=CH584_V1_0_1
+          includes=(-I"$p/APP" -I"$p/APP/include" -I"$p/HAL" -I"$p/HAL/include"
+                    -I"$p/LIB" -I"$p/StdPeriphDriver/inc" -I"$p/RVMSIS"
+                    -I"$p/u8g2/include")
+          gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/u8g2/u8g2_d_memory.c"
+          gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/u8g2/u8g2_d_setup.c"
+          gcc -std=gnu99 -fsyntax-only "${includes[@]}" "$p/APP/yuying_TFT.c"
