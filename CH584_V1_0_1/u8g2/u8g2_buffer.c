@@ -92,6 +92,18 @@ static void u8g2_send_buffer(u8g2_t *u8g2)
 /* same as u8g2_send_buffer but also send the DISPLAY_REFRESH message (used by SSD1606) */
 void u8g2_SendBuffer(u8g2_t *u8g2)
 {
+  u8x8_t *u8x8 = u8g2_GetU8x8(u8g2);
+  /* A full ST7306 frame uses one RAM-write window. Partial buffers and
+   * other panels retain the standard tile-row path. */
+  if (u8x8->display_cb == u8x8_d_st7306_300x400 &&
+      u8x8->display_info->tile_width == 75 &&
+      u8x8->display_info->tile_height == 50 &&
+      u8g2->tile_buf_height == 50 && u8g2->tile_curr_row == 0)
+  {
+    u8x8_st7306_send_frame(u8x8, u8g2->tile_buf_ptr);
+    u8x8_RefreshDisplay(u8x8);
+    return;
+  }
   u8g2_send_buffer(u8g2);
   u8x8_RefreshDisplay( u8g2_GetU8x8(u8g2) );  
 }

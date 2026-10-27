@@ -103,17 +103,30 @@ uint8_t *u8g2_m_21_48_f(uint8_t *page_cnt)
   return buf;
   #endif
 }
-/* ST7306 4.2-inch full buffer: 600 x 400 virtual mono bits = 30000 bytes.
- * Physical screen is 300 x 400 with 2 virtual bits per physical pixel.
- * The legacy helper name (38_50) is preserved for link compatibility. */
+/* Supplied 4.2-inch module driver: 75 x 50 x 8 = 30000 bytes.
+ * Keep the historical helper symbol for source/link compatibility. */
 uint8_t *u8g2_m_38_50_f(uint8_t *page_cnt)
 {
 #ifdef U8G2_USE_DYNAMIC_ALLOC
     *page_cnt = 50;
     return 0;   // 动态分配由调用者处理
 #else
-    static uint8_t buf[30000];   /* 75 * 50 * 8 bytes */
+    static uint8_t buf[75u * 50u * 8u];   /* 30000 bytes */
     *page_cnt = 50;
+    return buf;
+#endif
+}
+
+/* Five tile rows of the supplied 600 x 400 driver framebuffer.
+ * U8g2 FirstPage/NextPage redraws each 3000-byte page. */
+uint8_t *u8g2_m_75_50_p5(uint8_t *page_cnt)
+{
+#ifdef U8G2_USE_DYNAMIC_ALLOC
+    *page_cnt = 5u;
+    return 0;
+#else
+    static uint8_t buf[75u * 5u * 8u];   /* 3000 bytes */
+    *page_cnt = 5u;
     return buf;
 #endif
 }

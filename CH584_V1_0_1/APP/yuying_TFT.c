@@ -1,18 +1,31 @@
-#include "CONFIG.h"
+﻿#include "CONFIG.h"
 #include "yuying_TFT.h"
 #include "ui_latency_diag.h"
-#include "ui_fast_draw.h"
+#include "ui_render_layers.h"
 //#include "u8g2_fonts.c"
 #include "u8g2.h"
 #include "stdlib.h"
+#include <stdio.h>
 /* ★ 功能清单：主页面/子页要显示 CH584M 本地数据（CH_com_buf[]、绑定表、
  *   异常计数、扫描名称缓存），这些类型与 extern 声明都在 observer.h 里。
  *   observer.h 自身 include yuying_TFT.h（有 include guard），无循环问题。 */
 #include "observer.h"
 #include "ui_home_assets.h"
 #include "ui_menu_assets.h"
+#include "ui_menu_assets_extra.h"
+#include "ui_u0_v2_glyphs.h"
+#include "ui_home_header_assets.h"
+#include "ui_home_body_assets.h"
 #include "ui_wireless_assets.h"
 extern u8g2_t u8g2;
+#if SCREEN_PANEL_ST7306_42
+#include "ui_physical_42.h"
+#include "ui_boot_42_asset.h"
+#endif
+#include "ui_fast_draw.h"
+#if SCREEN_PANEL_ST7306_42
+#include "ui_legacy_42_projection.h"
+#endif
 data_LIST Data_list1;
 
 const uint8_t bmp[]={
@@ -191,10 +204,54 @@ static const ui_menu_glyph_t *ui_text_glyph(uint16_t code, uint8_t size)
     const ui_menu_glyph_t *table;
     uint16_t lo = 0u;
     uint16_t hi = (uint16_t)(sizeof(ui_menu_glyphs_14) / sizeof(ui_menu_glyphs_14[0]));
+    if (size == 20u)
+    {
+        table = ui_home_body_20;
+        hi = (uint16_t)(sizeof(ui_home_body_20) / sizeof(ui_home_body_20[0]));
+        for (lo = 0u; lo < hi; ++lo)
+            if (table[lo].code == code) return &table[lo];
+        return NULL;
+    }
+    /* Dedicated large voltage digits; existing menu sizes keep their tables. */
+    if (size == 22u || size == 24u)
+    {
+        table = size == 22u ? ui_home_voltage_22 : ui_home_voltage_24;
+        hi = (uint16_t)(sizeof(ui_home_voltage_24) / sizeof(ui_home_voltage_24[0]));
+        for (lo = 0u; lo < hi; ++lo)
+            if (table[lo].code == code) return &table[lo];
+        return NULL;
+    }
     if (size == 11u) table = ui_menu_glyphs_11;
     else if (size == 16u) table = ui_menu_glyphs_16;
     else if (size == 18u) table = ui_menu_glyphs_18;
     else table = ui_menu_glyphs_14;
+    while (lo < hi)
+    {
+        uint16_t mid = (uint16_t)(lo + (hi - lo) / 2u);
+        if (table[mid].code < code) lo = (uint16_t)(mid + 1u);
+        else if (table[mid].code > code) hi = mid;
+        else return &table[mid];
+    }
+    /* V2 names/statuses add only the missing YaHei glyphs from the reference. */
+    lo = 0u;
+    hi = (uint16_t)(sizeof(ui_menu_glyphs_extra_14) / sizeof(ui_menu_glyphs_extra_14[0]));
+    if (size == 11u) table = ui_menu_glyphs_extra_11;
+    else if (size == 16u) table = ui_menu_glyphs_extra_16;
+    else if (size == 18u) table = ui_menu_glyphs_extra_18;
+    else table = ui_menu_glyphs_extra_14;
+    while (lo < hi)
+    {
+        uint16_t mid = (uint16_t)(lo + (hi - lo) / 2u);
+        if (table[mid].code < code) lo = (uint16_t)(mid + 1u);
+        else if (table[mid].code > code) hi = mid;
+        else return &table[mid];
+    }
+    lo = 0u;
+    hi = (uint16_t)(sizeof(ui_u0_glyphs_14) / sizeof(ui_u0_glyphs_14[0]));
+    if (size == 11u) table = ui_u0_glyphs_11;
+    else if (size == 16u) table = ui_u0_glyphs_16;
+    else if (size == 18u) table = ui_u0_glyphs_18;
+    else table = ui_u0_glyphs_14;
     while (lo < hi)
     {
         uint16_t mid = (uint16_t)(lo + (hi - lo) / 2u);
@@ -406,6 +463,8 @@ static void UI_Message_Display(void)
     uint16_t dw, dh;
     uint16_t bw;
 
+    if (ui_render_layer == UI_LAYER_DYNAMIC) return;
+
     switch (g_ui_msg)
     {
         case UI_MSG_PARAM_SAVE_OK:   line = "参数保存成功"; break;
@@ -418,6 +477,8 @@ static void UI_Message_Display(void)
         /* ★ 第 11 轮：软关机提示页（常驻，直到 STM32 发 msg=0 清除） */
         case UI_MSG_POWER_OFF:       line = "长按K1+K3开机"; break;
         case UI_MSG_SHUTTING_DOWN:   line = "正在关机中"; break;
+        case UI_MSG_BIND_NONE:       line = "本来没有绑定"; break;
+        case UI_MSG_OP_TIMEOUT:      line = "操作超时"; break;
         default:                     line = "保存";         break;
     }
 
@@ -449,64 +510,149 @@ static void ui_send_buffer_profiled(uint32_t render_start)
 }
 #endif
 
-__HIGH_CODE
-void UI_Control(data_LIST *list)
-{
-    uint8_t rank2_addr=0,rank3_addr=0;
-#if UI_LATENCY_DIAG
-    uint32_t render_start = TMOS_GetSystemClock();
+/* Draw a single clip page; this routine must be free of per-frame side effects.
+ * The ST7306 low-RAM mode calls it once for each of the ten 5-tile-row
+ * regions. Frame-dependent state is captured before the picture loop. */
+#if SCREEN_PANEL_ST7306_42
+static void ui_u0_v2_draw(uint8_t rank, uint8_t menu);
+static void UI_Menu_Display_42(void);
 #endif
-    rank=list->menu_rank;
-    rank2_addr=list->rank2_addr;
-    rank3_addr=list->rank3_addr;
 
-    /* Control commands/no page must preserve panel RAM, never send blank. */
-    if (g_ui_msg == UI_MSG_NONE && (rank < 1u || rank > 4u)) return;
-    u8g2_ClearBuffer(&u8g2);
-
-    /* ★★ 保存结果提示页优先：只要 g_ui_msg 非 0，就画提示页**并直接返回**。
-       这样 STM32 随后发来的普通页面帧（0x01 menu_rank 1/2/3）不会把提示盖掉；
-       普通页面的字段仍然照常写进 Data_list1，提示消失后画回的就是最新页面。 */
+static void UI_DrawLegacyScene(uint8_t active_rank, uint8_t active_rank2_addr)
+{
     if (g_ui_msg != UI_MSG_NONE)
     {
         UI_Message_Display();
-#if UI_LATENCY_DIAG
-        ui_send_buffer_profiled(render_start);
-#else
-        u8g2_SendBuffer(&u8g2);
-#endif
         return;
     }
-
-   switch (rank)
-   {
-       case 1:
-           UI_Main_Display(&Data_list1);
-           break;
-       case 2:
-       case 3:
-           UI_Select=rank2_addr;
-           UI_Menu_Display();
-           break;
-       case 4:
-           new_return();
-           break;
-       case 5:
-//           PRINT("rank == %d ;u8g2Init(&u8g2)\r\n",rank);
-//           u8g2Init(&u8g2);
-//           rank=0;
-//
-//            app_drv_fifo_init(&app_uart_rx_fifo, app_uart_rx_buffer, 512);
-//            Usart3_Init();
-           break;
-       default:
-
-           break;
-   }
-#if UI_LATENCY_DIAG
-   ui_send_buffer_profiled(render_start);
+#if SCREEN_PANEL_ST7306_42
+    if (active_rank == 1u)
+    {
+        ui_u0_v2_draw(active_rank, active_rank2_addr);
+        return;
+    }
+#endif
+    switch (active_rank)
+    {
+        case 1:
+            UI_Main_Display(&Data_list1);
+            break;
+        case 2:
+        case 3:
+            UI_Select = active_rank2_addr;
+#if SCREEN_PANEL_ST7306_42
+            UI_Menu_Display_42();
 #else
-   u8g2_SendBuffer(&u8g2);
+            UI_Menu_Display();
+#endif
+            break;
+        case 4:
+            new_return();
+            break;
+        default:
+            break;
+    }
+}
+
+static void UI_DrawCurrentScene(uint8_t active_rank, uint8_t active_rank2_addr)
+{
+#if SCREEN_PANEL_ST7306_42
+    if (active_rank == 1u)
+    {
+        UI_DrawLegacyScene(active_rank, active_rank2_addr);
+        u8g2_SetDisplayRotation(&u8g2, U8G2_R3);
+        return;
+    }
+    u8g2_SetDisplayRotation(&u8g2, &ui42_physical_cb);
+#endif
+    UI_DrawLegacyScene(active_rank, active_rank2_addr);
+#if SCREEN_PANEL_ST7306_42
+    /* NextPage and the controller sender always see the physical geometry. */
+    u8g2_SetDisplayRotation(&u8g2, U8G2_R3);
+#endif
+}
+
+#include "ui_static_page_key.h"
+#include "ui_static_page_load.h"
+#include "ui42_dirty.h"          /* 脏行局部刷新（只发变化的 tile 行） */
+
+/* 供其它模块作废脏行缓存：面板重新上电 / 重新初始化 / 重新点亮之后必须整屏重发。 */
+void UI42_InvalidateFull(void)
+{
+    ui42_invalidate_full();
+}
+
+__HIGH_CODE
+void UI_Control(data_LIST *list)
+{
+    uint8_t active_rank = list->menu_rank;
+    uint8_t active_rank2_addr = list->rank2_addr;
+#if UI_STATIC_PAGES
+    uint8_t saved_layer = ui_render_layer;
+    uint8_t background = ui_static_page_key();
+    /* These assets encode the old menu contract and ten-channel home.
+     * V2 draws the complete scene; never mix it with an old cached background. */
+    uint8_t use_background = (uint8_t)(!SCREEN_PANEL_ST7306_42 &&
+        saved_layer == UI_LAYER_ALL && background < UI_BG_COUNT);
+#endif
+#if UI_LATENCY_DIAG
+    uint32_t render_start = TMOS_GetSystemClock();
+#endif
+
+    /* Preserve panel RAM when there is no valid page or active message. */
+    if (g_ui_msg == UI_MSG_NONE &&
+        (active_rank < 1u || active_rank > 4u)) return;
+
+#if SCREEN_PANEL_ST7306_42 && SCREEN_ST7306_PAGE_BUFFER
+    /* U8g2 picture loop: each page is cleared, drawn, sent and advanced.
+     * Never call SendBuffer() only once with a partial framebuffer. */
+    u8g2_FirstPage(&u8g2);
+    do
+    {
+#if UI_STATIC_PAGES
+        if (use_background)
+        {
+            if (ui_static_page_load(background)) ui_render_layer = UI_LAYER_DYNAMIC;
+            else
+            {
+                /* A configuration/resource mismatch falls back to live drawing. */
+                u8g2_ClearBuffer(&u8g2);
+                ui_render_layer = UI_LAYER_ALL;
+            }
+        }
+#endif
+        UI_DrawCurrentScene(active_rank, active_rank2_addr);
+    } while (u8g2_NextPage(&u8g2));
+#if UI_STATIC_PAGES
+    ui_render_layer = saved_layer;
+#endif
+#if UI_LATENCY_DIAG
+    /* Here render and SPI transfers are interleaved; combined duration. */
+    ui_profile_render_ticks = (uint32_t)(TMOS_GetSystemClock() - render_start);
+    ui_profile_transfer_ticks = 0u;
+#endif
+#else
+    u8g2_ClearBuffer(&u8g2);
+    UI_DrawCurrentScene(active_rank, active_rank2_addr);
+#if UI_LATENCY_DIAG
+    ui_send_buffer_profiled(render_start);
+#else
+    /* ★ 刷新提速（2026-10-25 第二轮）：改前是 u8g2_SendBuffer()，每次都把
+       30000 B 全推上 SPI（≈100 ms 阻塞）。现在只发"内容真的变了"的 tile 行：
+         - 没变化的字/框/位图一行都不发（0 B）；
+         - 只改了几个数字时通常 3~15 行（600~3000 B）；
+         - 翻页/整屏变化时仍然是 50 行（与改前等价）。
+       行索引映射与整屏发送一致（u8g2_buffer.c:79-89 + 驱动单行入口），
+       所以像素结果与改前逐位相同。见 ui42_dirty.h 的说明。 */
+    /* ★ 2026-10-25：改回"整屏发送"。
+       原因：脏行局部刷新（只发变化的 tile 行）在实际面板上出现"整幅画面左移、
+       右侧被裁掉同等宽度"的现象 —— 单行调用与整屏调用虽然逐行参数相同，但面板
+       控制器在"只写部分行 + 反复重设窗口"时的行为与整屏连续写不一致。
+       提速改为只保留"刷新节流"（Usart3_task.c：600ms 节拍 + 仅在有新数据时置脏
+       + 1.8s 兜底心跳），实测已把重画次数从 ~5 次/秒降到 ~1 次/秒，且显示正确。
+       脏行模块（ui42_dirty.h）保留编译但不再参与发送，便于日后排查。 */
+    u8g2_SendBuffer(&u8g2);
+#endif
 #endif
 }
 /* ==================================================================
@@ -545,6 +691,15 @@ void UI_Control(data_LIST *list)
 #define HOME_ROW_H        22
 #define HOME_GRID_H       110
 #define HOME_TEXT_SIZE    18u
+#if SCREEN_PANEL_ST7306_42
+#define HOME_LABEL_SIZE   14u
+#define DEVICE_LIST_SIZE  11u
+#define DEVICE_NAME_OFFSET 24u
+#else
+#define HOME_LABEL_SIZE   HOME_TEXT_SIZE
+#define DEVICE_LIST_SIZE  11u
+#define DEVICE_NAME_OFFSET 24u
+#endif
 #define HOME_ROWS         5
 #define HOME_CELL_L_X     14
 #define HOME_CELL_R_X     203
@@ -687,7 +842,8 @@ static void ui_main_channel_badge(uint16_t x, uint16_t baseline, uint8_t channel
     uint16_t label_width;
     uint16_t top = (uint16_t)(baseline - 15u);
 
-    ui_main_cut_frame(x, top, 22u, 18u, 2u);
+    UI_STATIC { ui_main_cut_frame(x, top, 22u, 18u, 2u); }
+    if (ui_render_layer == UI_LAYER_STATIC) return;
     sprintf(label, "%u", (unsigned int)channel);
     label_width = ui_text_width(label, 14u);
     ui_text_draw((uint16_t)(x + (22u - label_width) / 2u), baseline, label, 14u);
@@ -710,14 +866,17 @@ void UI_Main_Display(data_LIST *pData)
 
     /* ---------- 双层切角外框、左侧品牌区与中部标题牌 ---------- */
     u8g2_SetBitmapMode(&u8g2, 1);
+    UI_STATIC {
     ui_main_cut_frame(1u, 1u, 382u, 166u, 10u);
     /* 保持外侧两像素、内侧一像素，切角端点与直边对齐。 */
     ui_main_cut_frame(2u, 2u, 380u, 164u, 9u);
     ui_main_cut_frame(4u, 4u, 376u, 160u, 7u);
     ui_main_draw_brand();
     ui_main_draw_title();
+    }
 
     /* Page one owns the voltage and controller wireless indicator. */
+    UI_DYNAMIC {
     if (page == 1u)
     {
         uint8_t voltage_size = HOME_HEADER_BATTERY_SIZE;
@@ -754,8 +913,10 @@ void UI_Main_Display(data_LIST *pData)
         ui_main_meta_draw((uint16_t)(HOME_HEADER_STATE_RIGHT - w),
                           HOME_HEADER_STATE_BASE, state, 14u);
     }
+    }
 
     /* ---------- 两页共用同一位置的左右数据框 ---------- */
+    UI_STATIC {
     ui_main_cut_frame(7u, grid_top, 181u, HOME_GRID_H, 6u);
     ui_main_cut_frame(196u, grid_top, 181u, HOME_GRID_H, 6u);
 
@@ -764,6 +925,7 @@ void UI_Main_Display(data_LIST *pData)
         uint8_t line_y = (uint8_t)(grid_top + HOME_ROW_H * i);
         u8g2_DrawHLine(&u8g2, 7u, line_y, 181u);
         u8g2_DrawHLine(&u8g2, 196u, line_y, 181u);
+    }
     }
     /* ---------- 通道网格：分页、类型、值和单位处理保持原样 ---------- */
     first = (uint8_t)((page == 1u) ? 0u : 10u);
@@ -780,30 +942,45 @@ void UI_Main_Display(data_LIST *pData)
         y   = (uint8_t)(grid_top + 18u + HOME_ROW_H * row);
 
         ui_main_channel_badge(cx, y, (uint8_t)(ch + 1u));
+        UI_DYNAMIC {
         /* Channel labels exist before binding; types/units come from binding metadata. */
         if (display_type > TPYE_NONE && display_type < TPYE_END)
         {
             uint16_t value_w, unit_w, unit_x;
+            uint8_t value_size = HOME_TEXT_SIZE;
             const char *unit = CH_TYPE_UNIT[display_type];
-            ui_text_draw((uint16_t)(cx + HOME_NUM_W), y, CH_TYPE_NAME[display_type], HOME_TEXT_SIZE);
-            unit_w = ui_text_width(unit, HOME_TEXT_SIZE);
+            ui_text_draw((uint16_t)(cx + HOME_NUM_W), y, CH_TYPE_NAME[display_type], HOME_LABEL_SIZE);
+            unit_w = ui_text_width(unit, HOME_LABEL_SIZE);
             unit_x = (uint16_t)(cx + HOME_DATA_RIGHT - unit_w);
             if (d->valid && d->data_re_flag)
                 ch_disp_format(buf, sizeof(buf), display_type, d->CH_data);
             else strcpy(buf, "--");
-            value_w = ui_text_width(buf, HOME_TEXT_SIZE);
-            ui_text_draw((uint16_t)(unit_x - (unit_w ? 4u : 0u) - value_w), y, buf, HOME_TEXT_SIZE);
-            if (unit_w) ui_text_draw(unit_x, y, unit, HOME_TEXT_SIZE);
+            value_w = ui_text_width(buf, value_size);
+#if SCREEN_PANEL_ST7306_42
+            {
+                uint16_t value_left = (uint16_t)(cx + HOME_NUM_W +
+                    ui_text_width(CH_TYPE_NAME[display_type], HOME_LABEL_SIZE) + 6u);
+                uint16_t available = (uint16_t)(unit_x - (unit_w ? 4u : 0u) - value_left);
+                while (value_w > available && value_size > 11u)
+                {
+                    value_size = value_size == 18u ? 16u : value_size == 16u ? 14u : 11u;
+                    value_w = ui_text_width(buf, value_size);
+                }
+            }
+#endif
+            ui_text_draw((uint16_t)(unit_x - (unit_w ? 4u : 0u) - value_w), y, buf, value_size);
+            if (unit_w) ui_text_draw(unit_x, y, unit, HOME_LABEL_SIZE);
         }
         else
         {
             ui_text_draw((uint16_t)(cx + HOME_NUM_W), y, "--", HOME_TEXT_SIZE);
             ui_text_draw((uint16_t)(cx + HOME_DATA_RIGHT - ui_text_width("--", HOME_TEXT_SIZE)), y, "--", HOME_TEXT_SIZE);
         }
+        }
     }
 
     /* Page two has device/channel counts, without the old alarm field. */
-    if (page == 2u)
+    if (ui_render_layer != UI_LAYER_STATIC && page == 2u)
     {
         char bound_str[20], used_str[24];
         sprintf(bound_str, "已绑定:%u", (unsigned int)g_binding_count);
@@ -833,8 +1010,10 @@ static uint8_t ui_menu_selected(uint8_t option)
 static void ui_menu_control(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
                             const char *text, uint8_t selected, uint8_t centered)
 {
-    uint16_t tw = ui_menu_text_width(text, 16u);
+    uint16_t tw;
     uint16_t tx;
+    if (ui_render_layer == UI_LAYER_STATIC) return;
+    tw = ui_menu_text_width(text, 16u);
     u8g2_SetDrawColor(&u8g2, 0);
     if (selected) ui_fast_DrawBox(&u8g2, x, y, w, h);
     else u8g2_DrawFrame(&u8g2, x, y, w, h);
@@ -862,6 +1041,7 @@ static void ui_menu_button(uint8_t right, const char *text, uint8_t selected)
 static void ui_menu_field(uint16_t y, const char *label, const char *value,
                           uint8_t label_selected, uint8_t value_selected)
 {
+    if (ui_render_layer == UI_LAYER_STATIC) return;
     u8g2_SetDrawColor(&u8g2, 0);
     u8g2_DrawFrame(&u8g2, 117u, y, 207u, 27u);
     if (label_selected) ui_fast_DrawBox(&u8g2, 119u, (uint16_t)(y + 2u), 117u, 23u);
@@ -875,6 +1055,7 @@ static void ui_menu_field(uint16_t y, const char *label, const char *value,
 
 static void ui_menu_header(uint8_t menu)
 {
+    if (ui_render_layer == UI_LAYER_DYNAMIC) return;
     if (menu >= MAIN_LEN) menu = 0u;
     u8g2_SetDrawColor(&u8g2, 1);
     ui_fast_DrawBox(&u8g2, 113u, 1u, 266u, 166u);
@@ -917,10 +1098,13 @@ void UI_Menu_Display(void)
         }
     }
 
+    UI_STATIC {
     u8g2_SetDrawColor(&u8g2, 1);
     u8g2_DrawFrame(&u8g2, 1u, 1u, 382u, 166u);
     u8g2_DrawRFrame(&u8g2, 6u, 5u, 103u, 159u, 4u);
     u8g2_DrawFrame(&u8g2, 8u, 7u, 99u, 155u);
+    }
+    UI_DYNAMIC {
     for (i = 0u; i < MAIN_LEN; i++)
     {
         uint16_t top = (uint16_t)(9u + 19u * i);
@@ -932,14 +1116,17 @@ void UI_Menu_Display(void)
         ui_fast_DrawXBMP(&u8g2, 14u, (uint16_t)(top + 3u), 13u, 13u, ui_menu_nav_icons[i]);
         ui_menu_text(32u, (uint16_t)(top + 15u), Main_List[i].name, 16u);
     }
+    }
     ui_menu_header(UI_Select);
+    u8g2_SetDrawColor(&u8g2, 0u);
     Menu_List[UI_Select].function();
 
 restore_style:
     /* Invert the completed drawing for all secondary and third-level pages.
      * Ordinary pages use only the right pane; detail data/binding pages
      * replace the whole screen, so their inversion must cover it all. */
-    if (Data_list1.menu_rank == 2u || Data_list1.menu_rank == 3u)
+    if (ui_render_layer != UI_LAYER_STATIC &&
+        (Data_list1.menu_rank == 2u || Data_list1.menu_rank == 3u))
     {
         uint8_t re = Data_list1.UI_main.re_flag;
         /* ★ V1_0_10：组网测试页（UI_Select==1）真正进入子页后也整页自绘
@@ -980,29 +1167,35 @@ static void binding_device_list_page(uint8_t rank3)
 {
     char line[48];
     uint8_t i, n, rows_per_column;
+    UI_STATIC {
     u8g2_SetDrawColor(&u8g2, 1u);
     ui_fast_DrawBox(&u8g2, 1u, 1u, 382u, 166u);
     u8g2_SetDrawColor(&u8g2, 0u);
     u8g2_DrawRFrame(&u8g2, 2u, 1u, 380u, 166u, 4u);
     ui_fast_DrawXBMP(&u8g2, 10u, 6u, 13u, 13u, ui_menu_nav_icons[2]);
     ui_menu_text(29u, 20u, "设备绑定", 18u);
+    }
+    u8g2_SetDrawColor(&u8g2, 0u);
+    UI_DYNAMIC {
     sprintf(line, "总设备数:%d台", g_binding_count);
     ui_text_draw(108u, 20u, line, 18u);
     n = g_binding_count;
     if (n > MAX_CH_NUM) n = MAX_CH_NUM;
     /* Fixed columns: devices 1-10 on the left, 11-20 on the right. */
     rows_per_column = 10u;
-    if (n == 0u) ui_text_draw(14u, 33u, "--", 11u);
+    if (n == 0u) ui_text_draw(14u, 33u, "--", DEVICE_LIST_SIZE);
     for (i = 0u; i < n; i++)
     {
         uint16_t x = (uint16_t)(14u + 189u * (i / rows_per_column));
         uint16_t y = (uint16_t)(33u + 11u * (i % rows_per_column));
         sprintf(line, "%u:", (unsigned int)(i + 1u));
-        ui_text_draw(x, y, line, 11u);
-        ui_draw_name_size((uint16_t)(x + 24u), y, g_binding_list[i].name, 147u, 11u);
+        ui_text_draw(x, y, line, DEVICE_LIST_SIZE);
+        ui_draw_name_size((uint16_t)(x + DEVICE_NAME_OFFSET), y, g_binding_list[i].name,
+                          (uint16_t)(171u - DEVICE_NAME_OFFSET), DEVICE_LIST_SIZE);
     }
     ui_menu_control(6u, 140u, 183u, 22u, "解绑", (uint8_t)(rank3 == 0u), 1u);
     ui_menu_control(195u, 140u, 183u, 22u, "返回", (uint8_t)(rank3 != 0u), 1u);
+    }
 }
 
 /* 绑定设备子页（re_flag==2）：同屏显示全部绑定名称，不分页、不轮显。
@@ -1012,12 +1205,16 @@ static void binding_scan_page(uint8_t rank3)
     uint8_t i, n, rows_per_column;
     uint16_t column_step, name_width, row_step;
     char number[32];
+    UI_STATIC {
     u8g2_SetDrawColor(&u8g2, 1u);
     ui_fast_DrawBox(&u8g2, 1u, 1u, 382u, 166u);
     u8g2_SetDrawColor(&u8g2, 0u);
     u8g2_DrawRFrame(&u8g2, 2u, 1u, 380u, 166u, 4u);
     ui_fast_DrawXBMP(&u8g2, 10u, 6u, 13u, 13u, ui_menu_nav_icons[2]);
     ui_menu_text(29u, 20u, "设备绑定", 18u);
+    }
+    u8g2_SetDrawColor(&u8g2, 0u);
+    UI_DYNAMIC {
     n = g_binding_count;
     if (n > MAX_BINDING_NUM) n = MAX_BINDING_NUM;
     sprintf(number, "已绑定设备:%u台", (unsigned int)n);
@@ -1027,22 +1224,23 @@ static void binding_scan_page(uint8_t rank3)
     /* Normal records keep fixed columns: left 1-10, right 11-20. */
     rows_per_column = n <= MAX_CH_NUM ? 10u : 8u;
     column_step = n <= MAX_CH_NUM ? 189u : 92u;
-    name_width = n <= MAX_CH_NUM ? 147u : 64u;
+    name_width = (uint16_t)((n <= MAX_CH_NUM ? 171u : 88u) - DEVICE_NAME_OFFSET);
     row_step = n <= MAX_CH_NUM ? 11u : 13u;
-    if (n == 0u) ui_text_draw(14u, 33u, "--", 11u);
+    if (n == 0u) ui_text_draw(14u, 33u, "--", DEVICE_LIST_SIZE);
     for (i = 0u; i < n; i++)
     {
         uint16_t x = (uint16_t)(14u + column_step * (i / rows_per_column));
         uint16_t y = (uint16_t)(33u + row_step * (i % rows_per_column));
         sprintf(number, "%u:", (unsigned int)(i + 1u));
-        ui_text_draw(x, y, number, 11u);
-        ui_draw_name_size((uint16_t)(x + 24u), y, g_binding_list[i].name,
-                          name_width, 11u);
+        ui_text_draw(x, y, number, DEVICE_LIST_SIZE);
+        ui_draw_name_size((uint16_t)(x + DEVICE_NAME_OFFSET), y, g_binding_list[i].name,
+                          name_width, DEVICE_LIST_SIZE);
     }
     ui_menu_control(6u, 140u, 183u, 22u, "保存目前设备",
                      (uint8_t)(Data_list1.menu_rank == 3u && rank3 == 0u), 1u);
     ui_menu_control(195u, 140u, 183u, 22u, "返回",
                      (uint8_t)(Data_list1.menu_rank == 3u && rank3 != 0u), 1u);
+    }
 }
 
 void binding_Control(void)
@@ -1105,6 +1303,11 @@ static void ui_param_value(uint16_t x, uint16_t baseline, const char *text)
 static void ui_param_frame(void)
 {
     uint8_t i;
+    if (ui_render_layer == UI_LAYER_DYNAMIC)
+    {
+        u8g2_SetDrawColor(&u8g2, 0u);
+        return;
+    }
     u8g2_SetDrawColor(&u8g2, 1u);
     ui_fast_DrawBox(&u8g2, 1u, 1u, 382u, 166u);
     u8g2_SetDrawColor(&u8g2, 0u);
@@ -1134,6 +1337,7 @@ static void summary_name_page(void)
     device_t *d;
 
     ui_param_frame();
+    if (ui_render_layer == UI_LAYER_STATIC) return;
     for (ch = 0u; ch < MAX_CH_NUM; ch++)
     {
         cx = (uint16_t)((ch / PARAM_ROWS) ? PARAM_CELL_R_X : PARAM_CELL_L_X);
@@ -1152,8 +1356,10 @@ static void summary_factory_page(uint8_t rank3)
 {
     /* Center the confirmation within the right content pane. */
     const char *prompt = "确认恢复出厂设置?";
-    ui_menu_text((uint16_t)(113u + (266u - ui_menu_text_width(prompt, 16u)) / 2u),
-                 83u, prompt, 16u);
+    UI_STATIC {
+        ui_menu_text((uint16_t)(113u + (266u - ui_menu_text_width(prompt, 16u)) / 2u),
+                     83u, prompt, 16u);
+    }
     ui_menu_button(0u, "确认", (uint8_t)(Data_list1.menu_rank == 3u && rank3 == 0u));
     ui_menu_button(1u, "返回", (uint8_t)(Data_list1.menu_rank == 3u && rank3 != 0u));
 }
@@ -1192,7 +1398,7 @@ void addr_Control(void)
     ui_menu_field(62u, "分站号:", value, ui_menu_selected(0u), ui_menu_selected(1u));
     sprintf(value, "%d", Data_list1.Menu_rank1.set_host_num);
     ui_menu_field(99u, "本机地址:", value, ui_menu_selected(2u), ui_menu_selected(3u));
-    ui_fast_DrawXBMP(&u8g2, 325u, 73u, 47u, 52u, ui_menu_detail_address);
+    UI_STATIC { ui_fast_DrawXBMP(&u8g2, 325u, 73u, 47u, 52u, ui_menu_detail_address); }
     ui_menu_button(0u, "保存并返回", ui_menu_selected(4u));
     ui_menu_button(1u, "不保存返回", ui_menu_selected(5u));
 }
@@ -1267,6 +1473,7 @@ void networking_Control1(void)
 {
     /* Screen-only menu: STM32 must cycle/confirm only 0=start, 1=return.
      * Never remap obsolete STM32 focus IDs 2/3 to either live action. */
+    UI_STATIC {
     ui_menu_text(123u, 63u, "组网", 16u);
     u8g2_DrawFrame(&u8g2, 130u, 74u, 25u, 18u);
     u8g2_DrawFrame(&u8g2, 133u, 77u, 19u, 12u);
@@ -1276,6 +1483,7 @@ void networking_Control1(void)
     ui_fast_DrawXBMP(&u8g2, 226u, 71u, 29u, 27u, ui_menu_title_icons[1]);
     u8g2_DrawHLine(&u8g2, 258u, 84u, 63u);
     u8g2_DrawFrame(&u8g2, 327u, 73u, 21u, 25u);
+    }
     ui_menu_control(117u, 117u, 128u, 25u, "开始组网", ui_menu_selected(0u), 1u);
     ui_menu_control(247u, 117u, 128u, 25u, "返回", ui_menu_selected(1u), 1u);
 }
@@ -1308,27 +1516,34 @@ static void networking_Result_Page(void)
     uint8_t  done    = (uint8_t)(flag == NET_FLAG_DONE);
 
     /* ---- 整页底 + 圆角外框（与设备绑定/参数页同一版式） ---- */
+    UI_STATIC {
     u8g2_SetDrawColor(&u8g2, 1u);
     ui_fast_DrawBox(&u8g2, 1u, 1u, 382u, 166u);
     u8g2_SetDrawColor(&u8g2, 0u);
     u8g2_DrawRFrame(&u8g2, 2u, 1u, 380u, 166u, 4u);
     ui_fast_DrawXBMP(&u8g2, 10u, 6u, 13u, 13u, ui_menu_nav_icons[1]);
     ui_menu_text(29u, 20u, "组网测试", 18u);
+    }
+    u8g2_SetDrawColor(&u8g2, 0u);
 
     /* ---- 右上角：本机地址 ---- */
+    UI_DYNAMIC {
     sprintf(buf, "本机地址:%d", (int)Data_list1.Menu_rank2.now_host_addr);
     {
         uint16_t w = ui_menu_text_width(buf, 18u);
         ui_menu_text((uint16_t)(376u - w), 20u, buf, 18u);
     }
+    }
 
     /* ---- 表头 ---- */
+    UI_STATIC {
     u8g2_DrawHLine(&u8g2, 6u, 26u, 372u);
     /* ★ V1_0_11：表头字号由 14 提到 18（与本机地址同号），原来太小看不清。 */
     ui_menu_text( 30u, 40u, "测试地址", 18u);
     ui_menu_text(178u, 40u, "测试次数", 18u);
     ui_menu_text(286u, 40u, "成功比率", 18u);
     u8g2_DrawHLine(&u8g2, 6u, 42u, 372u);
+    }
 
     /* ---- 三个测试地址，各占一行 ---- */
     for (i = 0u; i < 3u; i++)
@@ -1340,8 +1555,9 @@ static void networking_Result_Page(void)
                        : (uint16_t)(((uint32_t)succ * 100u + (uint32_t)(cnt / 2u)) / cnt);
         uint8_t  cur  = (uint8_t)(running && Data_list1.Menu_rank2.cur_index == i);
 
-        if (i != 0u) u8g2_DrawHLine(&u8g2, 6u, y, 372u);
+        UI_STATIC { if (i != 0u) u8g2_DrawHLine(&u8g2, 6u, y, 372u); }
 
+        UI_DYNAMIC {
         /* ★★★ V1_0_12：正在测的那一行改成与「菜单/其它选项被选中」**完全一样**的画法。
            ------------------------------------------------------------------
            为什么颜色号看着是反的：右侧页面在 UI_Menu_Display() 末尾会被
@@ -1373,6 +1589,7 @@ static void networking_Result_Page(void)
         ui_menu_text(286u, (uint16_t)(y + 21u), buf, 18u);
 
         u8g2_SetDrawColor(&u8g2, 0u);
+        }
     }
 
     /* ---- 底部：左「开始组网 / 组网进行中 / 重新组网」，右「返回」 ---- */
@@ -1576,8 +1793,7 @@ void password_Control()
 }
 void new_return(void)
 {
-
-    ui_draw(80, 80, "正在重启保存数据");
+    UI_STATIC { ui_draw(80, 80, "正在重启保存数据"); }
 }
 /* Installation: re_flag 3 = local RSSI, 4 = local voltage.
  * Show all channels, including when the controller still sends an old page code. */
@@ -1589,6 +1805,7 @@ static void install_ch_page(uint8_t kind)
     device_t *d;
 
     ui_param_frame();
+    if (ui_render_layer == UI_LAYER_STATIC) return;
     for (ch = 0u; ch < MAX_CH_NUM; ch++)
     {
         cx = (uint16_t)((ch / PARAM_ROWS) ? PARAM_CELL_R_X : PARAM_CELL_L_X);
@@ -1615,8 +1832,10 @@ void uploading_Control(void)
 {
     uint8_t i;
     char label[16], old_value[20], new_value[20];
-    ui_menu_text(190u, 61u, "已存地址", 16u);
-    ui_menu_text(290u, 61u, "更改为", 16u);
+    UI_STATIC {
+        ui_menu_text(190u, 61u, "已存地址", 16u);
+        ui_menu_text(290u, 61u, "更改为", 16u);
+    }
     for (i = 0u; i < 3u; i++)
     {
         uint16_t y = (uint16_t)(65u + 23u * i);
@@ -1631,7 +1850,7 @@ void uploading_Control(void)
         else if (next == 121u) sprintf(new_value, "无");
         else if (next == 122u) sprintf(new_value, "分站");
         else sprintf(new_value, "%d号", next);
-        ui_menu_text(122u, (uint16_t)(y + 17u), label, 16u);
+        UI_STATIC { ui_menu_text(122u, (uint16_t)(y + 17u), label, 16u); }
         ui_menu_control(189u, y, 86u, 22u, old_value, 0u, 1u);
         ui_menu_control(279u, y, 96u, 22u, new_value, ui_menu_selected(i), 1u);
     }
@@ -1647,7 +1866,7 @@ void Other_Settings_Control(void)
     ui_menu_field(78u, "亮屏时间:", value, ui_menu_selected(2u), ui_menu_selected(3u));
     ui_menu_field(107u, "通信状态:", Data_list1.Menu_rank6.state == 1 ? "开机" : "不开机",
                   ui_menu_selected(4u), ui_menu_selected(5u));
-    ui_fast_DrawXBMP(&u8g2, 326u, 68u, 46u, 58u, ui_menu_detail_other);
+    UI_STATIC { ui_fast_DrawXBMP(&u8g2, 326u, 68u, 46u, 58u, ui_menu_detail_other); }
     ui_menu_button(0u, "保存并返回", ui_menu_selected(6u));
     ui_menu_button(1u, "不保存返回", ui_menu_selected(7u));
 }
@@ -1749,15 +1968,18 @@ void return_main_Control(void)
     const char *slogan = "精确 稳定 可靠";
     uint16_t version_x, slogan_width, slogan_x;
     /* Static reference artwork only; the STM32 still owns the return action. */
+    UI_STATIC {
     u8g2_SetDrawColor(&u8g2, 1u);
     ui_fast_DrawBox(&u8g2, 113u, 1u, 266u, 166u);
     u8g2_SetDrawColor(&u8g2, 0u);
     ui_fast_DrawXBMP(&u8g2, 113u, 1u, 266u, 166u, ui_menu_return_page);
+    }
     /* The reference bitmap carries the same full-size title at both levels. */
     /* Keep the V1_ prefix; controller tenths supply the final two segments. */
     sprintf(version, "V1_%u_%u", (unsigned int)(Data_list1.UI_main.version / 10u),
             (unsigned int)(Data_list1.UI_main.version % 10u));
     version_x = (uint16_t)(368u - ui_text_width(version, 18u));
+    UI_STATIC {
     slogan_width = UI_RETURN_SLOGAN_WIDTH;
     slogan_x = (uint16_t)(113u + (266u - slogan_width) / 2u);
     u8g2_SetDrawColor(&u8g2, 1u);
@@ -1773,23 +1995,31 @@ void return_main_Control(void)
         ui_preview_text(slogan_x, 155u, slogan, UI_RETURN_SLOGAN_SIZE, 0u);
     }
 #endif
-    ui_text_draw(version_x, 25u, version, 18u);
+    }
+    u8g2_SetDrawColor(&u8g2, 0u);
+    UI_DYNAMIC { ui_text_draw(version_x, 25u, version, 18u); }
 }
 
 
 
 
-
-
-
+#if SCREEN_PANEL_ST7306_42
+#include "ui_menu_42.h"
+#include "ui_u0_v2.h"
+#endif
 
 void u8g2Init(u8g2_t *u8g2)
 {
     TFT_IO_init();
 
 #if SCREEN_PANEL_ST7306_42
+#if SCREEN_ST7306_PAGE_BUFFER
+    u8g2_Setup_st7306_300x400_p5(u8g2, U8G2_R3,
+                                  u8x8_byte_CH584M_spi, u8x8_CH584M_gpio_and_delay);
+#else
     u8g2_Setup_st7306_300x400_f(u8g2, U8G2_R3,
                                  u8x8_byte_CH584M_spi, u8x8_CH584M_gpio_and_delay);
+#endif
 #else
     u8g2_Setup_st7305_yuying_168x384_f(u8g2, U8G2_R3,
                                         u8x8_byte_CH584M_spi, u8x8_CH584M_gpio_and_delay);
@@ -1799,24 +2029,47 @@ void u8g2Init(u8g2_t *u8g2)
     /* Write a complete requested image before any display-on command. */
     u8g2_SetPowerSave(u8g2, 1u);
     u8g2_ClearBuffer(u8g2);
+
+    /* ★ 脏行局部刷新：控制器刚被整帧重新初始化，面板 RAM 内容未知，
+       作废行 CRC 缓存 —— 下一次 UI_Control() 必须整屏重发一遍。 */
+    ui42_invalidate_full();
 }
 
-/* Native ST7305 RAM format, not XBMP. Restoring this image needs only a RAM
- * write. A physical S2 reset still runs normal controller initialization. */
+/* Render the supplied brand image for local RST or controller startup.
+ * The display task enables the panel after the complete frame transfer. */
 void UI_TestArtwork(u8g2_t *u8g2)
 {
 #if SCREEN_PANEL_ST7306_42
-    /* Do NOT transmit the ST7305 native boot bitmap to an ST7306 panel.
-     * This first-power-on geometry test also works without the baseboard. */
+    /* The ST7305 native bitmap has a different wire format. Use standard
+     * XBMP and the existing square-pixel callback for this 400x300 panel. */
+    uint8_t saved_color = u8g2->draw_color;
+    uint8_t saved_bitmap_mode = u8g2->bitmap_transparency;
+#if SCREEN_ST7306_PAGE_BUFFER
+    u8g2_FirstPage(u8g2);
+    do
+    {
+#else
     u8g2_ClearBuffer(u8g2);
-    u8g2_SetDrawColor(u8g2, 1u);
-    u8g2_DrawFrame(u8g2, 0u, 0u, SCREEN_WIDTH, SCREEN_HEIGHT);
-    u8g2_DrawFrame(u8g2, 6u, 6u, SCREEN_WIDTH - 12u, SCREEN_HEIGHT - 12u);
-    u8g2_DrawHLine(u8g2, 0u, SCREEN_HEIGHT / 2u, SCREEN_WIDTH);
-    u8g2_DrawVLine(u8g2, SCREEN_WIDTH / 2u, 0u, SCREEN_HEIGHT);
-    u8g2_DrawBox(u8g2, 24u, 24u, 48u, 48u);
-    u8g2_DrawBox(u8g2, SCREEN_WIDTH - 72u, SCREEN_HEIGHT - 72u, 48u, 48u);
+    {
+#endif
+        u8g2_SetDisplayRotation(u8g2, &ui42_physical_cb);
+        u8g2_SetDrawColor(u8g2, 1u); /* One is black on this panel. */
+        ui_fast_DrawBox(u8g2, 0u, 0u, SCREEN_PHYSICAL_WIDTH, SCREEN_PHYSICAL_HEIGHT);
+        u8g2_SetDrawColor(u8g2, 0u);
+        u8g2_SetBitmapMode(u8g2, 1u);
+        ui_fast_DrawXBMP(u8g2,
+                        (SCREEN_PHYSICAL_WIDTH - UI_BOOT_42_WIDTH) / 2u,
+                        (SCREEN_PHYSICAL_HEIGHT - UI_BOOT_42_HEIGHT) / 2u,
+                        UI_BOOT_42_WIDTH, UI_BOOT_42_HEIGHT, ui_boot_42_xbmp);
+        u8g2_SetDisplayRotation(u8g2, U8G2_R3);
+#if SCREEN_ST7306_PAGE_BUFFER
+    } while (u8g2_NextPage(u8g2));
+#else
+    }
     u8g2_SendBuffer(u8g2);
+#endif
+    u8g2_SetBitmapMode(u8g2, saved_bitmap_mode);
+    u8g2_SetDrawColor(u8g2, saved_color);
 #else
     u8x8_st7305_yuying_send_boot(u8g2_GetU8x8(u8g2));
 #endif

@@ -1249,7 +1249,7 @@ static const uint8_t u8x8_d_st7306_300x400_init_seq[] = {
     // 20. Panel Setting
     U8X8_CA(0xB8, 0x29),
 
-    // 21. Column Address Set (0x12 ~ 0x2A)
+    // 21. Supplied module: all 50 source-address groups
     U8X8_CAA(0x2A, 0x05, 0x36),
 
     // 22. Row Address Set (0x00 ~ 0xC7)
@@ -1264,8 +1264,8 @@ static const uint8_t u8x8_d_st7306_300x400_init_seq[] = {
     // 25. High Power Mode
     U8X8_C(0x38),
 
-    // 26. Display On
-    U8X8_C(0x29),
+    // 26. Keep off until APP has transferred the complete artwork/page.
+    U8X8_C(0x28),
 
     // 27. Inversion Off
     U8X8_C(0x20),
@@ -1276,7 +1276,8 @@ static const uint8_t u8x8_d_st7306_300x400_init_seq[] = {
     U8X8_END_TRANSFER(),
     U8X8_END()
 };
-/* 显示信息结构体 - 300x400 */
+/* Supplied module's 600-source x 400-gate driver model.
+ * Source coordinates do not establish the glass's physical pixel count. */
 static const u8x8_display_info_t u8x8_st7306_300x400_display_info =
 {
     /* chip_enable_level = */ 0,
@@ -1292,22 +1293,109 @@ static const u8x8_display_info_t u8x8_st7306_300x400_display_info =
     /* i2c_bus_clock_100kHz = */ 80,
     /* data_setup_time_ns = */ 15,
     /* write_pulse_width_ns = */ 70,
-    /* tile_width = */ 75,         /* 600 virtual bits / 8; 2 bits / physical pixel */
+    /* tile_width = */ 75,         /* 600 source coordinates / 8 */
     /* tile_height = */ 50,        /* 400/8 = 50 */
     /* default_x_offset = */ 0,
     /* flipmode_x_offset = */ 0,
-    /* pixel_width = */ 600,       /* virtual: physical 300, two bits/pixel */
+    /* pixel_width = */ 600,       /* supplied module's source-coordinate model */
     /* pixel_height = */ 400
 };
+
+/* Shared with the legacy tile-row path; display transfers run synchronously
+ * in the UI task. No second 30000-byte framebuffer fits in this firmware. */
+static uint8_t st7306_row[600];
+
+/* Expand each swapped two-bit pair into its own byte lane. Four lookups
+ * transpose a 4x4 block of pairs without sixteen variable shifts/table reads.
+ * This is the same fixed {0,2,1,3} pair mapping as conTable above.
+ * Keep the lookup in flash: RAM is shared with the BLE heap and framebuffer. */
+#define ST7306_PAIR(v) ((((uint32_t)(v) & 1u) << 1) | (((uint32_t)(v) & 2u) >> 1))
+#define ST7306_SPREAD(v) (ST7306_PAIR(v) | (ST7306_PAIR((v) >> 2) << 8) | \
+                         (ST7306_PAIR((v) >> 4) << 16) | (ST7306_PAIR((v) >> 6) << 24))
+#define ST7306_SPREAD16(b) \
+    ST7306_SPREAD((b)+0), ST7306_SPREAD((b)+1), ST7306_SPREAD((b)+2), ST7306_SPREAD((b)+3), \
+    ST7306_SPREAD((b)+4), ST7306_SPREAD((b)+5), ST7306_SPREAD((b)+6), ST7306_SPREAD((b)+7), \
+    ST7306_SPREAD((b)+8), ST7306_SPREAD((b)+9), ST7306_SPREAD((b)+10), ST7306_SPREAD((b)+11), \
+    ST7306_SPREAD((b)+12), ST7306_SPREAD((b)+13), ST7306_SPREAD((b)+14), ST7306_SPREAD((b)+15)
+static const uint32_t st7306_spread[256] = {
+    ST7306_SPREAD16(0x00), ST7306_SPREAD16(0x10), ST7306_SPREAD16(0x20), ST7306_SPREAD16(0x30),
+    ST7306_SPREAD16(0x40), ST7306_SPREAD16(0x50), ST7306_SPREAD16(0x60), ST7306_SPREAD16(0x70),
+    ST7306_SPREAD16(0x80), ST7306_SPREAD16(0x90), ST7306_SPREAD16(0xA0), ST7306_SPREAD16(0xB0),
+    ST7306_SPREAD16(0xC0), ST7306_SPREAD16(0xD0), ST7306_SPREAD16(0xE0), ST7306_SPREAD16(0xF0)
+};
+#undef ST7306_SPREAD16
+#undef ST7306_SPREAD
+#undef ST7306_PAIR
+
+void u8x8_st7306_send_frame(u8x8_t *u8x8, uint8_t *buffer)
+{
+    uint16_t row, group, offset;
+    /* Finish all repacking before opening the write window. Four source
+     * bytes become one byte in each of the four 150-byte segments. */
+    for (row = 0; row < 50; ++row)
+    {
+        uint8_t *src = buffer + row * 600u;
+        for (group = 0; group < 150; ++group)
+        {
+            const uint8_t *p = src + group * 4u;
+            uint32_t packed = (st7306_spread[p[0]] << 6) |
+                              (st7306_spread[p[1]] << 4) |
+                              (st7306_spread[p[2]] << 2) | st7306_spread[p[3]];
+            st7306_row[group] = (uint8_t)packed;
+            st7306_row[150u + group] = (uint8_t)(packed >> 8);
+            st7306_row[300u + group] = (uint8_t)(packed >> 16);
+            st7306_row[450u + group] = (uint8_t)(packed >> 24);
+        }
+        memcpy(src, st7306_row, sizeof(st7306_row));
+    }
+
+    u8x8_cad_StartTransfer(u8x8);
+    u8x8_cad_SendCmd(u8x8, 0x2A);
+    u8x8_cad_SendArg(u8x8, 0x05);
+    u8x8_cad_SendArg(u8x8, 0x36);
+    u8x8_cad_SendCmd(u8x8, 0x2B);
+    u8x8_cad_SendArg(u8x8, 0x00);
+    u8x8_cad_SendArg(u8x8, 0xC7);
+    u8x8_cad_SendCmd(u8x8, 0x2C);
+    /* CAD counts are eight bits. Keep CS asserted and the RAM write active
+     * across packets; no address commands or conversion between packets. */
+    for (offset = 0; offset < 30000u; )
+    {
+        uint16_t remaining = 30000u - offset;
+        uint8_t count = (uint8_t)(remaining > 255u ? 255u : remaining);
+        u8x8_cad_SendData(u8x8, count, buffer + offset);
+        offset += count;
+    }
+    u8x8_cad_EndTransfer(u8x8);
+
+    /* conTable swaps the two bits and is its own inverse. Restore the
+     * original drawing format so repeated sends/cache readers are safe. */
+    for (row = 0; row < 50; ++row)
+    {
+        uint8_t *src = buffer + row * 600u;
+        for (group = 0; group < 150; ++group)
+        {
+            uint32_t packed = st7306_spread[src[group]] |
+                              (st7306_spread[src[150u + group]] << 2) |
+                              (st7306_spread[src[300u + group]] << 4) |
+                              (st7306_spread[src[450u + group]] << 6);
+            uint8_t *p = st7306_row + group * 4u;
+            p[0] = (uint8_t)(packed >> 24);
+            p[1] = (uint8_t)(packed >> 16);
+            p[2] = (uint8_t)(packed >> 8);
+            p[3] = (uint8_t)packed;
+        }
+        memcpy(src, st7306_row, sizeof(st7306_row));
+    }
+}
 
 /* 驱动函数 - ST7305 300x400 */
 uint8_t u8x8_d_st7306_300x400(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
 
-    uint16_t x, y;
-    uint8_t c;
+    uint16_t y;
     uint8_t *ptr=NULL;
-    static uint8_t date_temp[600];  /* 75 tiles * 8 = 600 bytes maximum */
+    uint8_t *date_temp = st7306_row; /* one tile row: 4 segments x 150 bytes */
 
     switch (msg)
     {
@@ -1349,76 +1437,63 @@ uint8_t u8x8_d_st7306_300x400(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *
 #endif
     case U8X8_MSG_DISPLAY_DRAW_TILE:
     {
-        x = ((u8x8_tile_t *)arg_ptr)->x_pos;
-        x /= 4;
-        x += u8x8->x_offset;
-        y = (((u8x8_tile_t *)arg_ptr)->y_pos);
-        y *= 4;
+        /* u8g2 hands over complete rows of the supplied 600-source model
+         * (x_pos == 0, cnt == tile_width == 75, 0 <= y_pos < 50). Anything
+         * else is rejected before the transfer is started. */
+        if (((u8x8_tile_t *)arg_ptr)->x_pos != 0)
+            return 0;
+        if (((u8x8_tile_t *)arg_ptr)->cnt != 75)
+            return 0;
+        if (((u8x8_tile_t *)arg_ptr)->y_pos >= 50)
+            return 0;
 
-        c = ((u8x8_tile_t *)arg_ptr)->cnt;
+        y = ((u8x8_tile_t *)arg_ptr)->y_pos;
+        y *= 4;                         /* 4 row addresses per u8g2 tile row */
         ptr = ((u8x8_tile_t *)arg_ptr)->tile_ptr;
 
-        memset(date_temp, 0x00, sizeof(date_temp));
+        /* Match the supplied c*2 segment / c*8 frame-row packing for c=75.
+         * All 600 input bytes are source data; there are no padding columns. */
+        memset(date_temp, 0x00, sizeof(st7306_row));
+        for (uint16_t i = 0; i < 600; i++)
+        {
+            date_temp[i/4]        <<= 2;
+            date_temp[150 + i/4]  <<= 2;
+            date_temp[300 + i/4]  <<= 2;
+            date_temp[450 + i/4]  <<= 2;
+
+            date_temp[i/4]        |= conTable[ptr[i] & 0x03];
+            date_temp[150 + i/4]  |= conTable[(ptr[i] >> 2) & 0x03];
+            date_temp[300 + i/4]  |= conTable[(ptr[i] >> 4) & 0x03];
+            date_temp[450 + i/4]  |= conTable[(ptr[i] >> 6) & 0x03];
+        }
 
         u8x8_cad_StartTransfer(u8x8);
+
+        /* Same complete source window as the supplied module driver. */
         u8x8_cad_SendCmd(u8x8, 0x2A);
         u8x8_cad_SendArg(u8x8, 0x05);
         u8x8_cad_SendArg(u8x8, 0x36);
 
-
+        /* Supplied y..0xC7 row window; send one complete tile row at a time. */
         u8x8_cad_SendCmd(u8x8, 0x2B);
-        u8x8_cad_SendArg(u8x8, y);
-
+        u8x8_cad_SendArg(u8x8, (uint8_t)y);
         u8x8_cad_SendArg(u8x8, 0xC7);
+
         u8x8_cad_SendCmd(u8x8, 0x2C);
-//        // 2. 在 DRAW_TILE 分支中：
-        uint16_t seg_len = c * 2;           // 每段字节数（宽度/4）
-        uint16_t total_bytes = c * 8;       // 总发送字节数（必须 ≤ 600）
 
-        /* 75 tiles * 8 = 600 bytes. Guard partial-area transmissions. */
-        if (total_bytes > sizeof(date_temp)) {
-            u8x8_cad_EndTransfer(u8x8);
-            return 0;
-        }
-        memset(date_temp, 0x00, total_bytes);
-
-        // 3. 将循环变量改为 uint16_t
-        for (uint16_t i = 0; i < c * 8; i++)
+        /* 600 bytes per tile row, sent as 255+255+90; 50 rows = 30000 bytes. */
         {
-            // 四个段分别左移 2 位
-            date_temp[i/4] <<= 2;
-            date_temp[seg_len + i/4] <<= 2;
-            date_temp[2*seg_len + i/4] <<= 2;
-            date_temp[3*seg_len + i/4] <<= 2;
-
-            // 填充灰度值
-            date_temp[i/4] |= conTable[ptr[i] & 0x03];
-            date_temp[seg_len + i/4] |= conTable[(ptr[i] >> 2) & 0x03];
-            date_temp[2*seg_len + i/4] |= conTable[(ptr[i] >> 4) & 0x03];
-            date_temp[3*seg_len + i/4] |= conTable[(ptr[i] >> 6) & 0x03];
+            uint8_t *send_ptr = date_temp;
+            uint16_t remaining = sizeof(st7306_row);
+            while (remaining > 0)
+            {
+                uint16_t chunk = (remaining > 255) ? 255 : remaining;
+                u8x8_cad_SendData(u8x8, (uint8_t)chunk, send_ptr);
+                send_ptr += chunk;
+                remaining -= chunk;
+            }
         }
 
-        // 4. 分块发送（u8x8_cad_SendData 最大 255 字节）
-        uint8_t *send_ptr = date_temp;
-        uint16_t remaining = total_bytes;
-        while (remaining > 0) {
-            uint16_t chunk = (remaining > 255) ? 255 : remaining;
-            u8x8_cad_SendData(u8x8, chunk, send_ptr);
-            send_ptr += chunk;
-            remaining -= chunk;
-        }
-//        for (uint8_t i = 0; i < c*8; i++)
-//               {
-//                   date_temp[i/4] <<= 2;
-//                   date_temp[42+i/4] <<= 2;
-//                   date_temp[84+i/4] <<= 2;
-//                   date_temp[126+i/4] <<= 2;
-//                   date_temp[i/4] |= conTable[ptr[i]&0x03];
-//                   date_temp[42+i/4] |= conTable[(ptr[i]>>2)&0x03];
-//                   date_temp[84+i/4] |= conTable[(ptr[i]>>4)&0x03];
-//                   date_temp[126+i/4] |= conTable[(ptr[i]>>6)&0x03];
-//               }
-//               u8x8_cad_SendData(u8x8, 168, date_temp);
         u8x8_cad_EndTransfer(u8x8);
         break;
     }

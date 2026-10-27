@@ -48,6 +48,11 @@
 #include <string.h>
 #include <stdint.h>
 #include <CH585SFR.h>
+#include "download_uart_debug.h"
+#if DOWNLOAD_UART_DEBUG && defined(DEBUG) && (DEBUG == Debug_UART1)
+#undef PRINT
+#define PRINT(...) do { } while (0)
+#endif
 #include "core_riscv.h"
 #include "CH58x_clk.h"
 #include "CH58x_uart.h"

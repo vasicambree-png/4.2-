@@ -61,12 +61,12 @@ void app_drv_fifo_flush(app_drv_fifo_t *fifo)
 
 bool app_drv_fifo_is_empty(app_drv_fifo_t *fifo)
 {
-    return (fifo->begin == fifo->end);
+    return (fifo_length(fifo) == 0u);
 }
 
 bool app_drv_fifo_is_full(app_drv_fifo_t *fifo)
 {
-    return (fifo_length(fifo) == fifo->size);
+    return (fifo_length(fifo) == fifo->size - 1u);
 }
 
 app_drv_fifo_result_t
@@ -81,11 +81,14 @@ app_drv_fifo_write(app_drv_fifo_t *fifo, uint8_t *data, uint16_t *p_write_length
         return APP_DRV_FIFO_RESULT_NULL;
     }
     //PRINT("fifo_length = %d\r\n",fifo_length(fifo));
-    const uint16_t available_count = fifo->size - fifo_length(fifo);
+    const uint16_t available_count = fifo->size - 1u - fifo_length(fifo);
     const uint16_t requested_len = (*p_write_length);
     uint16_t       index = 0;
     uint16_t       write_size = MIN(requested_len, available_count);
     //PRINT("available_count %d\r\n",available_count);
+    /* Masked cursors must keep one slot empty: a full ring otherwise looks
+     * empty. Always report how many bytes fit, including full/query cases. */
+    (*p_write_length) = write_size;
     // Check if the FIFO is FULL.
     if(available_count == 0)
     {
@@ -133,7 +136,7 @@ app_drv_fifo_write_from_same_addr(app_drv_fifo_t *fifo, uint8_t *data, uint16_t 
         return APP_DRV_FIFO_RESULT_NULL;
     }
     //UART1_SendString(data, write_length);
-    const uint16_t available_count = fifo->size - fifo_length(fifo);;
+    const uint16_t available_count = fifo->size - 1u - fifo_length(fifo);;
     const uint16_t requested_len = (write_length);
     uint16_t       index = 0;
     uint16_t       write_size = MIN(requested_len, available_count);
@@ -281,7 +284,7 @@ app_drv_fifo_result_t app_drv_fifo_read_pack(app_drv_fifo_t *fifo, uint8_t *data
     //   frame_total_len = total_len + 6 必须 <= APP_DRV_FIFO_PACK_MAX(512)
     //   ⇒ total_len <= 506。原来写的是 510（frame_total_len 最大 516），
     //     会越界写 4 字节 —— 见上面 APP_DRV_FIFO_PACK_MAX 的说明。
-    if (total_len > (APP_DRV_FIFO_PACK_MAX - 6U)) {
+    if (total_len < 1U || total_len > (APP_DRV_FIFO_PACK_MAX - 6U)) {
         fifo->begin = (fifo->begin + offset + 1) & fifo->size_mask; // 跳过该 AA
         //PRINT("555555555555555\r\n");
         return APP_DRV_FIFO_RESULT_NOT_FOUND;
@@ -305,7 +308,7 @@ app_drv_fifo_result_t app_drv_fifo_read_pack(app_drv_fifo_t *fifo, uint8_t *data
     }
 
     // 校验和计算：从指令（帧头后第4字节）到校验和前一个字节
-    uint8_t cal_sum = 0;
+    uint8_t cal_sum = 0x55u;
     uint16_t chk_start = (fifo->begin + offset + 4) & fifo->size_mask;
     uint16_t chk_end   = (fifo->begin + offset + frame_total_len - 3) & fifo->size_mask; // 校验和前一个字节
 

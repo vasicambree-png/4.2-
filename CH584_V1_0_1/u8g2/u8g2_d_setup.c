@@ -137,17 +137,31 @@ void u8g2_Setup_st7305_yuying_168x384_f(u8g2_t *u8g2, const u8g2_cb_t *rotation,
   buf = u8g2_m_21_48_f(&tile_buf_height);
   u8g2_SetupBuffer(u8g2, buf, tile_buf_height, u8g2_ll_hvline_vertical_top_lsb, rotation);
 }
-/* st7306 yuying 300x400 f*/
+/* Supplied 4.2-inch module: 600x400 driver canvas, 30000-byte full buffer. */
 void u8g2_Setup_st7306_300x400_f(u8g2_t *u8g2, const u8g2_cb_t *rotation,
                                  u8x8_msg_cb byte_cb, u8x8_msg_cb gpio_and_delay_cb)
 {
     uint8_t tile_buf_height;
     uint8_t *buf;
 
-    //  π”√–¬µƒœ‘ æ«˝∂Ø u8x8_d_st7306_300x400£®–Ë◊‘–– µœ÷£©
+    /* Historical driver symbol; actual source width is 600 (75 tiles). */
     u8g2_SetupDisplay(u8g2, u8x8_d_st7306_300x400, u8x8_cad_011, byte_cb, gpio_and_delay_cb);
 
-    // ∑÷≈‰»´∆¡ª∫≥Â«¯
+    // ÂàÜÈÖçÂÖ®Â±èÁºìÂÜ≤Âå∫
     buf = u8g2_m_38_50_f(&tile_buf_height);
     u8g2_SetupBuffer(u8g2, buf, tile_buf_height, u8g2_ll_hvline_vertical_top_lsb, rotation);
+}
+
+/* Same supplied module format, using a 75*5*8 = 3000-byte page buffer.
+ * U8G2_R3 exposes a 400x600 driver canvas. */
+void u8g2_Setup_st7306_300x400_p5(u8g2_t *u8g2, const u8g2_cb_t *rotation,
+                                  u8x8_msg_cb byte_cb, u8x8_msg_cb gpio_and_delay_cb)
+{
+    uint8_t tile_buf_height;
+    uint8_t *buf;
+    u8g2_SetupDisplay(u8g2, u8x8_d_st7306_300x400,
+                      u8x8_cad_011, byte_cb, gpio_and_delay_cb);
+    buf = u8g2_m_75_50_p5(&tile_buf_height);
+    u8g2_SetupBuffer(u8g2, buf, tile_buf_height,
+                     u8g2_ll_hvline_vertical_top_lsb, rotation);
 }

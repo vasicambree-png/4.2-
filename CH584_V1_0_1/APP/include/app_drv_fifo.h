@@ -55,8 +55,8 @@ typedef enum
  */
 typedef struct Fifo_s
 {
-    uint16_t begin;
-    uint16_t end;
+    volatile uint16_t begin;
+    volatile uint16_t end;
     uint8_t *data;
     uint16_t size;
     uint16_t size_mask;

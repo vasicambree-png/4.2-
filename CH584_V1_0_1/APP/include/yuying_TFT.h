@@ -10,9 +10,26 @@
 #define SCREEN_PANEL_ST7306_42 1
 #endif
 
-/* ST7306 packs two horizontal virtual bits into each physical pixel.
- * With U8G2_R3 its framebuffer coordinates are 400 x 600, while the
- * real screen is 400 x 300 in landscape orientation. */
+/* 4.2-inch full-screen refresh is the default: 75 x 50 x 8 = 30000 B.
+ * UI_Control clears and draws the entire scene once, then sends all rows.
+ * Set to 1 only to opt into the 75 x 5 x 8 = 3000 B page-buffer renderer.
+ * The supplied module driver uses 600 source coordinates (75 tiles) and
+ * tile_height is 50, one framebuffer bit per source coordinate.
+ * This matches the supplied 0x05..0x36 column window and 30000-byte frame.
+ * A value of 0 selects the full-screen renderer for normal page updates
+ * and startup artwork without changing page layout or data routing.
+ * The optional page mode saves RAM but repeats draw calls for every page.
+ * No hardware validation has been performed yet. */
+#ifndef SCREEN_ST7306_PAGE_BUFFER
+#define SCREEN_ST7306_PAGE_BUFFER 0
+#endif
+
+
+/* The supplied module driver uses a 600-source x 400-gate framebuffer.
+ * U8G2_R3 exposes a 400 x 600 drawing canvas. These are driver coordinates,
+ * not a claim that the glass has 400 x 600 physical pixels.
+ * The vertical-LSB framebuffer is repacked into four 150-byte segments per
+ * tile row; all 600 source bytes are sent, with no padding columns. */
 #if SCREEN_PANEL_ST7306_42
 #define SCREEN_PHYSICAL_WIDTH  400u
 #define SCREEN_PHYSICAL_HEIGHT 300u
@@ -29,8 +46,8 @@
 #define RST_HIGH        GPIOA_SetBits(GPIO_Pin_3);
 
 #if SCREEN_PANEL_ST7306_42
-#define SCREEN_WIDTH    400  /* U8g2 logical width after R3 */
-#define SCREEN_HEIGHT   600  /* U8g2 virtual height after R3 */
+#define SCREEN_WIDTH    400  /* U8g2 driver canvas after R3 */
+#define SCREEN_HEIGHT   600  /* Supplied module's source-coordinate span */
 #else
 #define SCREEN_WIDTH    384
 #define SCREEN_HEIGHT   168
@@ -139,7 +156,10 @@ typedef struct  {
     uint16_t cur_index;       /* 正在测试的地址序号 0~2（测完=3） */
     uint16_t addr[3];         /* 三个测试地址 */
     uint16_t cnt[3];          /* 各自的已测次数（0~10） */
-    uint16_t succ[3];         /* 各自的成功次数（0~10） */
+    union {
+        uint16_t rssi[3];     /* V2: RSSI magnitude, 0xFF = no measurement. */
+        uint16_t succ[3];     /* Legacy source compatibility; not a success count in V2. */
+    };
     //配套回调函数
 }data_addr2;
 
@@ -249,7 +269,10 @@ void UI_Menu_Display(void);
 #define UI_MSG_POWER_OFF        8u   /* 软关机：提示长按 K1+K3 开机        */
 #define UI_MSG_SHUTTING_DOWN    9u   /* 正在关机中（5 秒后 STM32 断电）    */
 
-#define UI_MSG_HOLD_SEC         2u   /* 提示页显示时长（秒），1 秒事件倒数     */
+#define UI_MSG_BIND_NONE        10u  /* Both sides had no binding to clear. */
+#define UI_MSG_OP_TIMEOUT       11u  /* No matching U0 status before deadline. */
+
+#define UI_MSG_HOLD_SEC         3u   /* 提示页显示时长（秒），1 秒事件倒数     */
 
 void ui_show_msg(uint8_t code);      /* 显示一条保存结果提示（code = UI_MSG_xxx）*/
 uint8_t ui_msg_tick_sec(void);       /* 1 秒事件调用；返回 1 表示提示刚刚消失（调用方应请求重画）*/
@@ -274,6 +297,10 @@ void TFT_IO_init(void);
 void u8g2Init1(u8g2_t *u8g2);
 void u8g2Init(u8g2_t *u8g2);
 void UI_TestArtwork(u8g2_t *u8g2);
+
+/* 作废"脏行局部刷新"的行 CRC 缓存：面板重新上电 / 重新初始化后必须整屏重发一遍。
+   （实现见 yuying_TFT.c，缓存与判定见 ui42_dirty.h） */
+void UI42_InvalidateFull(void);
 
 
 void spi_write_test(uint16_t data);

@@ -554,6 +554,12 @@ void mDelaymS(uint16_t t)
 #ifdef DEBUG
 int _write(int fd, char *buf, int size)
 {
+#if DOWNLOAD_UART_DEBUG && (DEBUG == Debug_UART1)
+    /* Keep direct printf output out of the PC binary protocol stream. */
+    (void)fd;
+    (void)buf;
+    return size;
+#else
     int i;
     for(i = 0; i < size; i++)
     {
@@ -572,6 +578,7 @@ int _write(int fd, char *buf, int size)
 #endif
     }
     return size;
+#endif
 }
 
 #endif

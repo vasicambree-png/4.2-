@@ -836,6 +836,8 @@ uint8_t u8x8_d_null_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr
 
 /* u8x8_d_XXX.c */
 uint8_t u8x8_d_st7306_300x400(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
+/* Full framebuffer only (30000 bytes); restores the u8g2 buffer after sending. */
+void u8x8_st7306_send_frame(u8x8_t *u8x8, uint8_t *buffer);
 
 uint8_t u8x8_d_uc1701_ea_dogs102(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
 uint8_t u8x8_d_uc1701_mini12864(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);

@@ -44,12 +44,23 @@ const uint8_t MacAddr[6] = {0x84, 0xC2, 0xE4, 0x03, 0x02, 0x02};
  *
  * @return  none
  */
+/* Paired reference reloads already-configured watchdogs on every loop.
+ * KEY_RELOADING_COUNT does not enable IWDG. */
+__HIGH_CODE
+__attribute__((noinline))
+static void app_watchdog_feed(void)
+{
+    IWDG_KR_Set(KEY_RELOADING_COUNT);   /* 0xAAAA */
+    WWDG_SetCounter(0);                 /* also reload the plain WDT count */
+}
+
 __HIGH_CODE
 __attribute__((noinline))
 void Main_Circulation()
 {
     while(1)
     {
+        app_watchdog_feed();
         app_uart_process();
         TMOS_SystemProcess();
     }
@@ -81,7 +92,7 @@ int main(void)
 
 #endif
 
-#ifdef DEBUG
+#if defined(DEBUG) || DOWNLOAD_UART_DEBUG
     GPIOA_SetBits(GPIO_Pin_9);
 
     GPIOA_ModeCfg(GPIO_Pin_8, GPIO_ModeIN_PU);
